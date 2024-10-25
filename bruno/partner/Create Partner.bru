@@ -1,0 +1,31 @@
+meta {
+  name: Create Partner
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/partner
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt}}
+}
+
+body:json {
+  {
+    "name": "Partner XYZ",
+    "email": "partner@example.com",
+    "phone1": "5511912345678",
+    "phone2": "5511923456789",
+    "place": "Rua Exemplo",
+    "number": "123",
+    "neighborhood": "Centro",
+    "city": "São Paulo",
+    "state": "SP",
+    "zipCode": "01000000"
+  }
+  
+}

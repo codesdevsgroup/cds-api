@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Config {
+  id           Int     @id @default(autoincrement())
+  name         String  @db.VarChar(120)
+  email        String  @db.VarChar(120)
+  mobile       String  @db.VarChar(20)
+  phone1       String? @db.VarChar(20)
+  phone2       String? @db.VarChar(20)
+  place        String  @db.VarChar(150)
+  number       String  @db.VarChar(10)
+  complement   String? @db.VarChar(50)
+  neighborhood String  @db.VarChar(120)
+  city         String  @db.VarChar(60)
+  state        String  @db.VarChar(2)
+  zipCode      String  @db.VarChar(10)
+
+  @@map("config")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique @db.VarChar(80)
+  username      String    @unique @db.VarChar(255)
+  cpfCnpj       String?   @db.VarChar(14)
+  password      String    @db.VarChar(255)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  isDeleted     Boolean   @default(false)
+  isActive      Boolean   @default(false)
+  activatedAt   DateTime?
+  termsIp       String?   @db.VarChar(45)
+  termsAccepted Boolean   @default(false)
+  role          Role      @default(CLIENT)
+  personId      Int?      @unique
+  tokenVersion  Int       @default(0)
+  person        Person?   @relation(fields: [personId], references: [id])
+
+  @@map("user")
+}
+
+model Person {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  fantasyName String?   @db.VarChar(255)
+  cpfCnpj     String?   @db.VarChar(11)
+  email       String    @unique @db.VarChar(80)
+  phone1      String?   @db.VarChar(20)
+  phone2      String?   @db.VarChar(20)
+  birthDate   DateTime?
+  notes       String?
+  defaulter   Boolean   @default(false)
+  photo       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  isDeleted   Boolean   @default(false)
+  user        User?     @relation
+  addressId   Int?      @unique
+  address     Address?  @relation(fields: [addressId], references: [id])
+
+  @@map("person")
+}
+
+model Address {
+  id           Int       @id @default(autoincrement())
+  street       String    @db.VarChar(255)
+  number       String    @db.VarChar(10)
+  neighborhood String    @db.VarChar(255)
+  city         String    @db.VarChar(255)
+  state        String    @db.VarChar(2)
+  zipCode      String    @db.VarChar(10)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  isDeleted    Boolean   @default(false)
+  person       Person?
+
+  @@map("address")
+}
+
+enum Role {
+  CLIENT
+  ADMIN
+  SUPERVISOR
+  STAFF
+  FINANCIAL
+  SOCIALMEDIA
+  PARTNER_ADMIN
+  PARTNER_STAFF
+  CODESDEVS
+}

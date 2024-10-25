@@ -1,0 +1,21 @@
+meta {
+  name: Update Dog Breeds
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{host}}/dog-breed/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt}}
+}
+
+body:json {
+  {
+    "name": "Golden Retrievers"
+  }
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Get One Litter
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/litter/4
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt}}
+}

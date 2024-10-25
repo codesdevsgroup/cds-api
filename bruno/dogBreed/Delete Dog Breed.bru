@@ -1,0 +1,15 @@
+meta {
+  name: Delete Dog Breed
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{host}}/dog-breed/2
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt}}
+}

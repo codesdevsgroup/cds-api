@@ -1,0 +1,47 @@
+meta {
+  name: Create Litter
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/litter
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt}}
+}
+
+body:json {
+  {
+    "description": "Ninhada de Golden Retrievers",
+    "birthAt": "2023-09-01T00:00:00.000Z",
+    "motherId": 2,
+    "fatherId": 1,
+    "dogs": [
+      {
+        "name": "Max",
+        "color": "Dourado",
+        "sex": "MALE",
+        "birthAt": "2023-09-01T00:00:00.000Z",
+        "microchipNumber": "123456789012345",
+        "dogBreedId": 1,
+        "motherId": 2,
+        "fatherId": 1
+      },
+      {
+        "name": "Bella",
+        "color": "Dourado",
+        "sex": "FEMALE",
+        "birthAt": "2023-09-01T00:00:00.000Z",
+        "microchipNumber": "123456789012346",
+        "dogBreedId": 1,
+        "motherId": 2,
+        "fatherId": 1
+      }
+    ]
+  }
+  
+}

@@ -1,0 +1,29 @@
+meta {
+  name: Create Dog
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{host}}/dog
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt}}
+}
+
+body:json {
+  {
+    "name": "Cassio",
+    "color": "Azul",
+    "sex": "MALE",
+    "birthAt": "2020-01-01T00:00:00.000Z",
+    "microchipNumber": "51581916",
+    "dogBreedId": 1,
+    "motherId": 2,
+    "fatherId": 1
+  }
+  
+}

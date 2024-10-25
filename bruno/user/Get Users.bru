@@ -1,0 +1,15 @@
+meta {
+  name: Get Users
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/user/cm25i34fj0000482crg7254ad
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt}}
+}

@@ -1,0 +1,22 @@
+meta {
+  name: Delete Litter
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{host}}/litter/4
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt}}
+}
+
+body:json {
+  {
+    "description": "Ninhada de Golden Retrie"
+  }
+  
+}

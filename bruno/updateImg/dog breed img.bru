@@ -1,0 +1,19 @@
+meta {
+  name: dog breed img
+  type: http
+  seq: 2
+}
+
+patch {
+  url: {{host}}/upload/dogbreed/1
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt}}
+}
+
+body:multipart-form {
+  file: @file(C:\dev\ad_automacao\public\images\logo_dark.png)
+}

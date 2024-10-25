@@ -1,0 +1,29 @@
+meta {
+  name: Create Dog Breeds
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{host}}/dog-breed
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt}}
+}
+
+body:json {
+  {
+    "name": "Pinscher",
+    "size": "MEDIUM",
+    "coatType": "LONG",
+    "coatColor": "Dourado",
+    "eyeColor": "Marrom",
+    "temperament": "FRIENDLY",
+    "lifeExpectancy": 12,
+    "region": "Europa Ocidental",
+    "country": "Reino Unido"
+  }
+}
