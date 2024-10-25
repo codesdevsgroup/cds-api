@@ -1,6 +1,6 @@
 import { EmailService } from '../../../services/email/email.service';
 import { ConfigService } from '@nestjs/config';
-import { User } from '../../../entities/user.entity';
+import { User } from '../../../shared/entities/user.entity';
 import { TokenUtils } from './token.utils';
 
 export class EmailUtils {

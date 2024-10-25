@@ -14,7 +14,7 @@ import {
 import { UpdateMeDto } from './dto/update-me.dto';
 import { Prisma, Role } from '@prisma/client';
 import { CreateAddressDto, CreatePersonDto } from './dto/create-person.dto';
-import { User } from "../../entities/user.entity";
+import { User } from "../../shared/entities/user.entity";
 
 @Injectable()
 export class UserService {
