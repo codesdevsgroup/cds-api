@@ -5,17 +5,17 @@ meta {
 }
 
 post {
-  url: {{host}}/user
+  url: {{host}}/register
   body: json
   auth: none
 }
 
 body:json {
   {
-    "email": "teste@teste.com",
+    "email": "alef@teste.com",
     "password": "123456",
-    "username": "teste",
-    "terms": true
+    "username": "alef",
+    "termsAccepted": true
   }
 }
 

@@ -9,10 +9,10 @@ import { GoogleAuthModule } from './routes/google-auth/google-auth.module';
 import { BullModule } from '@nestjs/bullmq';
 import { EmailProcessor } from './services/email/email.processor';
 import { EmailService } from './services/email/email.service';
-import { BlogModule } from './routes/blog/blog.module';
 import { ConfigModule } from './routes/config/config.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { ClientModule } from './routes/client/client.module';
 
 @Module({
   imports: [
@@ -31,12 +31,12 @@ import { join } from 'path';
     BullModule.registerQueue({
       name: 'email',
     }),
-    BlogModule,
     ConfigModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),
+    ClientModule,
   ],
   providers: [
     EmailProcessor,

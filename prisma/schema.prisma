@@ -83,6 +83,7 @@ model Address {
   deletedAt    DateTime?
   isDeleted    Boolean   @default(false)
   person       Person?
+  client       Client?
 
   @@map("address")
 }
@@ -94,7 +95,26 @@ enum Role {
   STAFF
   FINANCIAL
   SOCIALMEDIA
-  PARTNER_ADMIN
-  PARTNER_STAFF
   CODESDEVS
+}
+
+model Client {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(80)
+  fantasyName String?   @db.VarChar(255)
+  cpfCnpj     String?   @db.VarChar(14)
+  email       String    @unique @db.VarChar(80)
+  phone1      String?   @db.VarChar(20)
+  phone2      String?   @db.VarChar(20)
+  notes       String?
+  defaulter   Boolean   @default(false)
+  photo       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  isDeleted   Boolean   @default(false)
+  addressId   Int?      @unique
+  address     Address?  @relation(fields: [addressId], references: [id])
+
+  @@map("client")
 }
