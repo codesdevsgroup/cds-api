@@ -26,46 +26,49 @@ model Config {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique @db.VarChar(80)
-  username      String    @unique @db.VarChar(255)
-  cpfCnpj       String?   @db.VarChar(14)
-  password      String    @db.VarChar(255)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id            String      @id @default(cuid())
+  email         String      @unique @db.VarChar(80)
+  username      String      @unique @db.VarChar(255)
+  cpfCnpj       String?     @db.VarChar(14)
+  password      String      @db.VarChar(255)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   deletedAt     DateTime?
-  isDeleted     Boolean   @default(false)
-  isActive      Boolean   @default(false)
+  isDeleted     Boolean     @default(false)
+  isActive      Boolean     @default(false)
   activatedAt   DateTime?
-  termsIp       String?   @db.VarChar(45)
-  termsAccepted Boolean   @default(false)
-  role          Role      @default(CLIENT)
-  personId      Int?      @unique
-  tokenVersion  Int       @default(0)
-  person        Person?   @relation(fields: [personId], references: [id])
+  termsIp       String?     @db.VarChar(45)
+  termsAccepted Boolean     @default(false)
+  role          Role        @default(CLIENT)
+  personId      Int?        @unique
+  tokenVersion  Int         @default(0)
+  person        Person?     @relation(fields: [personId], references: [id])
+  scheduler     Scheduler[]
 
   @@map("user")
 }
 
 model Person {
-  id          Int       @id @default(autoincrement())
-  name        String    @db.VarChar(255)
-  fantasyName String?   @db.VarChar(255)
-  cpfCnpj     String?   @db.VarChar(11)
-  email       String    @unique @db.VarChar(80)
-  phone1      String?   @db.VarChar(20)
-  phone2      String?   @db.VarChar(20)
-  birthDate   DateTime?
-  notes       String?
-  defaulter   Boolean   @default(false)
-  photo       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
-  isDeleted   Boolean   @default(false)
-  user        User?     @relation
-  addressId   Int?      @unique
-  address     Address?  @relation(fields: [addressId], references: [id])
+  id                 Int         @id @default(autoincrement())
+  name               String      @db.VarChar(255)
+  fantasyName        String?     @db.VarChar(255)
+  cpfCnpj            String?     @db.VarChar(11)
+  email              String      @unique @db.VarChar(80)
+  phone1             String?     @db.VarChar(20)
+  phone2             String?     @db.VarChar(20)
+  birthDate          DateTime?
+  notes              String?
+  defaulter          Boolean     @default(false)
+  photo              String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  deletedAt          DateTime?
+  isDeleted          Boolean     @default(false)
+  user               User?       @relation
+  addressId          Int?        @unique
+  address            Address?    @relation(fields: [addressId], references: [id])
+  schedulers         Scheduler[] @relation("SchedulerPerson")
+  responseSchedulers Scheduler[] @relation("SchedulerResponsePerson")
 
   @@map("person")
 }
@@ -115,4 +118,45 @@ model Client {
   address     Address?  @relation(fields: [addressId], references: [id])
 
   @@map("client")
+}
+
+// Modelo Agendamento
+model Scheduler {
+  id               Int       @id @default(autoincrement())
+  personId         Int
+  userId           String // Usuário que fez o Agendamento
+  responsePersonId Int? // Usuário que fará o Procedimento
+  processId        Int
+  returnDay        DateTime?
+  price            Float
+  notation         String?   @db.VarChar(255)
+  start            DateTime
+  end              DateTime
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  isDeleted        Boolean   @default(false)
+  person           Person    @relation("SchedulerPerson", fields: [personId], references: [id])
+  user             User      @relation(fields: [userId], references: [id])
+  personResponse   Person?   @relation("SchedulerResponsePerson", fields: [responsePersonId], references: [id])
+  process          Processes @relation(fields: [processId], references: [id])
+
+  @@map("scheduler")
+}
+
+// Modelo de Procedimento
+model Processes {
+  id            Int         @id @default(autoincrement())
+  name          String      @db.VarChar(255)
+  description   String?     @db.VarChar(255)
+  price         Float       @default(0)
+  returInterval Int         @default(0)
+  duration      Int         @default(30)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  deletedAt     DateTime?
+  isDeleted     Boolean     @default(false)
+  scheduler     Scheduler[]
+
+  @@map("processes")
 }
