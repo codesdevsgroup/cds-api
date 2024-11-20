@@ -193,23 +193,4 @@ export class UserController {
       throw new CustomInternalErrorException(error);
     }
   }
-
-  @Roles(Role.ADMIN, Role.CODESDEVS)
-  @ExcludeRoles(Role.CLIENT)
-  @Get('partner/:search')
-  async searchPartnerRolesUsers(
-    @Param('search') search: string,
-    @Res() res: Response,
-  ) {
-    try {
-      const data = await this.userService.searchPartnerRolesUsers(search);
-
-      return res.status(HttpStatus.OK).json({
-        ...data,
-        success: true,
-      });
-    } catch (error) {
-      throw new CustomInternalErrorException(error);
-    }
-  }
 }
