@@ -7,6 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Configurações do Sistema
 model Config {
   id           Int     @id @default(autoincrement())
   name         String  @db.VarChar(120)
@@ -25,29 +26,78 @@ model Config {
   @@map("config")
 }
 
+// Modelo de Usuário para Autenticação
 model User {
-  id            String      @id @default(cuid())
-  email         String      @unique @db.VarChar(80)
-  username      String      @unique @db.VarChar(255)
-  cpfCnpj       String?     @db.VarChar(14)
-  password      String      @db.VarChar(255)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id            String       @id @default(cuid())
+  email         String       @unique @db.VarChar(80)
+  username      String       @unique @db.VarChar(255)
+  cpfCnpj       String?      @db.VarChar(14)
+  password      String       @db.VarChar(255)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   deletedAt     DateTime?
-  isDeleted     Boolean     @default(false)
-  isActive      Boolean     @default(false)
+  isDeleted     Boolean      @default(false)
+  isActive      Boolean      @default(false)
   activatedAt   DateTime?
-  termsIp       String?     @db.VarChar(45)
-  termsAccepted Boolean     @default(false)
-  role          Role        @default(CLIENT)
-  personId      Int?        @unique
-  tokenVersion  Int         @default(0)
-  person        Person?     @relation(fields: [personId], references: [id])
+  termsIp       String?      @db.VarChar(45)
+  termsAccepted Boolean      @default(false)
+  role          Role         @default(CLIENT)
+  personId      Int?         @unique
+  teamMembersId Int?         @unique
+  tokenVersion  Int          @default(0)
+  person        Person?      @relation(fields: [personId], references: [id])
+  teamMembers   TeamMembers? @relation(fields: [teamMembersId], references: [id])
   scheduler     Scheduler[]
 
   @@map("user")
 }
 
+// Modelo de Membros da Equipe (Funcionários)
+model TeamMembers {
+  id             Int                    @id @default(autoincrement())
+  name           String                 @db.VarChar(255)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  deletedAt      DateTime?
+  isDeleted      Boolean                @default(false)
+  workStartTime  DateTime
+  workEndTime    DateTime
+  discountLimit  Float                  @default(0)
+  commissionRate Float                  @default(0)
+  position       String                 @db.VarChar(100)
+  hireDate       DateTime
+  salary         Float
+  users          User[]
+  departments    TeamMemberDepartment[]
+
+  @@map("team_members")
+}
+
+// Modelo de Departamentos da Empresa (Equipe) para os Funcionários
+model Department {
+  id          Int                    @id @default(autoincrement())
+  name        String                 @db.VarChar(100)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  deletedAt   DateTime?
+  isDeleted   Boolean                @default(false)
+  teamMembers TeamMemberDepartment[]
+
+  @@map("departments")
+}
+
+// Modelo de Relacionamento entre Membros da Equipe e Departamentos
+model TeamMemberDepartment {
+  teamMemberId Int
+  departmentId Int
+  teamMember   TeamMembers @relation(fields: [teamMemberId], references: [id])
+  department   Department  @relation(fields: [departmentId], references: [id])
+
+  @@id([teamMemberId, departmentId])
+  @@map("team_member_department")
+}
+
+// Modelo de Pessoas (Clientes e Funcionários) da Empresa com Dados Pessoais e de Contato
 model Person {
   id                 Int         @id @default(autoincrement())
   name               String      @db.VarChar(255)
@@ -73,6 +123,7 @@ model Person {
   @@map("person")
 }
 
+// Modelo de Endereços para Pessoas (Clientes e Funcionários)
 model Address {
   id           Int       @id @default(autoincrement())
   street       String    @db.VarChar(255)
