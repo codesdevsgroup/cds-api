@@ -69,6 +69,9 @@ model TeamMembers {
   salary         Float
   users          User[]
   departments    TeamMemberDepartment[]
+  os             OS[]
+  whatsapp       WhatsAppInstance[]
+  invitedMembers InvitedMember[]
 
   @@map("team_members")
 }
@@ -99,45 +102,47 @@ model TeamMemberDepartment {
 
 // Modelo de Pessoas (Clientes e Funcionários) da Empresa com Dados Pessoais e de Contato
 model Person {
-  id                 Int         @id @default(autoincrement())
-  name               String      @db.VarChar(255)
-  fantasyName        String?     @db.VarChar(255)
-  cpfCnpj            String?     @db.VarChar(11)
-  email              String      @unique @db.VarChar(80)
-  phone1             String?     @db.VarChar(20)
-  phone2             String?     @db.VarChar(20)
+  id                 Int               @id @default(autoincrement())
+  name               String            @db.VarChar(255)
+  fantasyName        String?           @db.VarChar(255)
+  cpfCnpj            String?           @db.VarChar(11)
+  email              String            @unique @db.VarChar(80)
+  phone1             String?           @db.VarChar(20)
+  phone2             String?           @db.VarChar(20)
   birthDate          DateTime?
   notes              String?
-  defaulter          Boolean     @default(false)
+  defaulter          Boolean           @default(false)
   photo              String?
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
   deletedAt          DateTime?
-  isDeleted          Boolean     @default(false)
-  user               User?       @relation
-  addressId          Int?        @unique
-  address            Address?    @relation(fields: [addressId], references: [id])
-  schedulers         Scheduler[] @relation("SchedulerPerson")
-  responseSchedulers Scheduler[] @relation("SchedulerResponsePerson")
+  isDeleted          Boolean           @default(false)
+  user               User?             @relation
+  addressId          Int?              @unique
+  address            Address?          @relation(fields: [addressId], references: [id])
+  schedulers         Scheduler[]       @relation("SchedulerPerson")
+  responseSchedulers Scheduler[]       @relation("SchedulerResponsePerson")
+  os                 OS[]
+  corporateClient    CorporateClient[]
 
   @@map("person")
 }
 
 // Modelo de Endereços para Pessoas (Clientes e Funcionários)
 model Address {
-  id           Int       @id @default(autoincrement())
-  street       String    @db.VarChar(255)
-  number       String    @db.VarChar(10)
-  neighborhood String    @db.VarChar(255)
-  city         String    @db.VarChar(255)
-  state        String    @db.VarChar(2)
-  zipCode      String    @db.VarChar(10)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id           Int              @id @default(autoincrement())
+  street       String           @db.VarChar(255)
+  number       String           @db.VarChar(10)
+  neighborhood String           @db.VarChar(255)
+  city         String           @db.VarChar(255)
+  state        String           @db.VarChar(2)
+  zipCode      String           @db.VarChar(10)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
   deletedAt    DateTime?
-  isDeleted    Boolean   @default(false)
+  isDeleted    Boolean          @default(false)
   person       Person?
-  client       Client?
+  corporate    CorporateClient?
 
   @@map("address")
 }
@@ -150,25 +155,6 @@ enum Role {
   FINANCIAL
   SOCIALMEDIA
   CODESDEVS
-}
-
-model Client {
-  id          Int       @id @default(autoincrement())
-  name        String    @db.VarChar(80)
-  fantasyName String?   @db.VarChar(80)
-  cpfCnpj     String?   @db.VarChar(14)
-  email       String    @unique @db.VarChar(80)
-  phone1      String?   @db.VarChar(20)
-  phone2      String?   @db.VarChar(20)
-  notes       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
-  isDeleted   Boolean   @default(false)
-  addressId   Int?      @unique
-  address     Address?  @relation(fields: [addressId], references: [id])
-
-  @@map("client")
 }
 
 // Modelo Agendamento
@@ -210,4 +196,84 @@ model Processes {
   scheduler     Scheduler[]
 
   @@map("processes")
+}
+
+// Modelo de Ordem de Serviço (OS)
+model OS {
+  id               Int               @id @default(autoincrement())
+  description      String            @db.VarChar(255)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+  isDeleted        Boolean           @default(false)
+  personId         Int
+  teamMemberId     Int
+  person           Person            @relation(fields: [personId], references: [id])
+  teamMember       TeamMembers       @relation(fields: [teamMemberId], references: [id])
+  whatsappMessages WhatsAppMessage[]
+
+  @@map("os")
+}
+
+// Modelo de Mensagens do WhatsApp
+enum MessageType {
+  SENT
+  RECEIVED
+}
+
+model WhatsAppInstance {
+  id                Int               @id @default(autoincrement())
+  startTime         DateTime          @default(now())
+  endTime           DateTime?
+  handledByMemberId Int // ID do membro da equipe responsável pelo atendimento
+  teamMember        TeamMembers       @relation(fields: [handledByMemberId], references: [id])
+  whatsappMessages  WhatsAppMessage[] // Relação um-para-muitos com WhatsAppMessage
+  invitedMembers    InvitedMember[] // Relação muitos-para-muitos com TeamMembers através de InvitedMember
+
+  @@map("whatsapp_instance")
+}
+
+model WhatsAppMessage {
+  id                 Int               @id @default(autoincrement())
+  timestamp          DateTime          @default(now())
+  content            String            @db.Text
+  osId               Int
+  messageType        MessageType // Tipo de mensagem (ENVIADA ou RECEBIDA)
+  os                 OS                @relation(fields: [osId], references: [id], onDelete: Cascade)
+  whatsappInstanceId Int? // Chave estrangeira para WhatsAppInstance
+  whatsappInstance   WhatsAppInstance? @relation(fields: [whatsappInstanceId], references: [id])
+
+  @@map("whatsapp_message")
+}
+
+model InvitedMember {
+  whatsappInstanceId Int
+  teamMemberId       Int
+  whatsappInstance   WhatsAppInstance @relation(fields: [whatsappInstanceId], references: [id])
+  teamMember         TeamMembers      @relation(fields: [teamMemberId], references: [id])
+
+  @@id([whatsappInstanceId, teamMemberId])
+  @@map("invited_member")
+}
+
+// Modelo de empresa cliente do sistema
+model CorporateClient {
+  id          Int       @id @default(autoincrement())
+  personId    Int
+  name        String    @db.VarChar(80)
+  fantasyName String?   @db.VarChar(80)
+  cpfCnpj     String?   @db.VarChar(14)
+  email       String    @unique @db.VarChar(80)
+  phone1      String?   @db.VarChar(20)
+  phone2      String?   @db.VarChar(20)
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  isDeleted   Boolean   @default(false)
+  addressId   Int?      @unique
+  address     Address?  @relation(fields: [addressId], references: [id])
+  person      Person    @relation(fields: [personId], references: [id])
+
+  @@map("corporate_client")
 }
