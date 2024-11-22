@@ -1,0 +1,28 @@
+meta {
+  name: send
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/whatsapp/send
+  body: json
+  auth: none
+}
+
+headers {
+  : 
+}
+
+body:json {
+  {
+    "number": "553195790332",
+    "message": "Fala menolo, estamos on do bruno"
+  }
+  
+}
+
+body:multipart-form {
+  to: 553391448945
+  message: oi
+}
