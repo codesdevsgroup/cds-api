@@ -12,6 +12,7 @@ import { EmailService } from './services/email/email.service';
 import { ConfigModule } from './routes/config/config.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { WhatsappModule } from './routes/whatsapp/whatsapp.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { join } from 'path';
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),
+    WhatsappModule,
   ],
   providers: [
     EmailProcessor,
@@ -44,6 +46,5 @@ import { join } from 'path';
       useClass: JwtAuthGuard,
     },
   ],
-  controllers: [],
 })
 export class AppModule {}
