@@ -12,7 +12,6 @@ import { EmailService } from './services/email/email.service';
 import { ConfigModule } from './routes/config/config.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { ClientModule } from './routes/client/client.module';
 
 @Module({
   imports: [
@@ -36,7 +35,6 @@ import { ClientModule } from './routes/client/client.module';
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),
-    ClientModule,
   ],
   providers: [
     EmailProcessor,

@@ -5,7 +5,19 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/cds-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/cds-api/issues"
+  },
+  "homepage": "https://github.com/yourusername/cds-api#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "scripts": {
+    "prestart": "npm install",
     "start": "nest start",
     "modelo": "ts-node prisma/seed.ts",
     "build": "nest build",
@@ -22,15 +34,15 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@nestjs/bullmq": "^10.2.0",
-    "@nestjs/common": "^10.0.0",
+    "@nestjs/bullmq": "^10.2.2",
+    "@nestjs/common": "^10.4.8",
     "@nestjs/config": "^3.2.3",
-    "@nestjs/core": "^10.0.0",
+    "@nestjs/core": "^10.4.8",
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/mapped-types": "*",
     "@nestjs/passport": "^10.0.3",
-    "@nestjs/platform-express": "^10.0.0",
-    "@nestjs/schedule": "^4.1.0",
+    "@nestjs/platform-express": "^10.4.8",
+    "@nestjs/schedule": "^4.1.1",
     "@nestjs/serve-static": "^4.0.2",
     "@nestjs/swagger": "^7.3.1",
     "@prisma/client": "^5.22.0",
@@ -51,14 +63,14 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.0.0",
+    "@nestjs/cli": "^10.4.8",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
     "@types/bcrypt": "^5.0.2",
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.2",
     "@types/multer": "^1.4.12",
-    "@types/node": "^20.3.1",
+    "@types/node": "^20.17.6",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "@types/supertest": "^6.0.0",
