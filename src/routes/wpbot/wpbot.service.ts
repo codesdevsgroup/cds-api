@@ -117,6 +117,7 @@ export class WpbotService implements OnModuleInit {
       this.clients.delete(sessionId);
       this.saveSessions();
       this.deleteSessionFromDb(sessionId);
+      delete this.qrCodes[sessionId]; // Remove o QR code quando a sessão é desconectada
     });
 
     client.initialize();
@@ -141,6 +142,7 @@ export class WpbotService implements OnModuleInit {
     this.clients.delete(sessionId);
     this.saveSessions();
     await this.deleteSessionFromDb(sessionId);
+    delete this.qrCodes[sessionId]; // Remove o QR code quando a sessão é deletada
 
     const sessionPath = path.join('./auth', sessionId);
     if (fs.existsSync(sessionPath)) {
