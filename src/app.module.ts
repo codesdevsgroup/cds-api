@@ -13,6 +13,7 @@ import { ConfigModule } from './routes/config/config.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { WpbotModule } from './routes/wpbot/wpbot.module';
+import { WpmsgModule } from './routes/wpmsg/wpmsg.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { WpbotModule } from './routes/wpbot/wpbot.module';
       serveRoot: '/uploads',
     }),
     WpbotModule,
+    WpmsgModule,
   ],
   providers: [
     EmailProcessor,

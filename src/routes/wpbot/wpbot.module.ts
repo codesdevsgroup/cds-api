@@ -9,5 +9,6 @@ import { WpbotController } from './wpbot.controller';
   imports: [EventEmitterModule.forRoot(), PrismaModule],
   providers: [WpbotService],
   controllers: [WpbotController],
+  exports: [WpbotService],
 })
 export class WpbotModule {}

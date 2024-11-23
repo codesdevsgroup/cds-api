@@ -112,18 +112,8 @@ export class WpbotService implements OnModuleInit {
     this.saveSessionToDb(sessionId, description, dataPath);
   }
 
-  // Envia uma mensagem usando a sessão especificada
-  async sendMessage(sessionId: string, number: string, message: string) {
-    const client = this.clients.get(sessionId);
-    if (!client) {
-      throw new Error(`Sessão "${sessionId}" não encontrada.`);
-    }
-
-    const chatId = `${number}@c.us`;
-    await client.sendMessage(chatId, message);
-    this.logger.log(
-      `Mensagem enviada para ${number} pela sessão "${sessionId}".`,
-    );
+  getClients(): Map<string, Client> {
+    return this.clients;
   }
 
   // Retorna todas as sessões ativas
