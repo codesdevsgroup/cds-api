@@ -12,7 +12,7 @@ import { EmailService } from './services/email/email.service';
 import { ConfigModule } from './routes/config/config.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { WhatsappModule } from './routes/whatsapp/whatsapp.module';
+import { WpconfigModule } from './routes/wpconfig/wpconfig.module';
 
 @Module({
   imports: [
@@ -36,7 +36,7 @@ import { WhatsappModule } from './routes/whatsapp/whatsapp.module';
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),
-    WhatsappModule,
+    WpconfigModule,
   ],
   providers: [
     EmailProcessor,

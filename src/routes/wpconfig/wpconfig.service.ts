@@ -1,11 +1,11 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Injectable, Logger } from '@nestjs/common';
 import { Client, LocalAuth } from 'whatsapp-web.js';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
-export class WhatsappService implements OnModuleInit {
+export class WpconfigService {
   private client: Client;
-  private readonly logger = new Logger(WhatsappService.name);
+  private readonly logger = new Logger(WpconfigService.name);
 
   constructor(private eventEmitter: EventEmitter2) {
     this.client = new Client({
@@ -15,7 +15,7 @@ export class WhatsappService implements OnModuleInit {
 
   onModuleInit() {
     this.client.on('qr', (qr) => {
-      this.logger.log(`QrCode: http://localhost:3006/whatsapp/qrcode`);
+      this.logger.log(`QrCode: http://localhost:3006/wpconfig/qrcode`);
       this.eventEmitter.emit('qrcode.created', qr);
     });
 

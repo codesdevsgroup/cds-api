@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { WhatsappService } from './whatsapp.service';
-import { BotController } from './whatsapp.controller';
+import { WpconfigService } from './wpconfig.service';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { BotController } from './wpconfig.controller';
 
 @Module({
   imports: [EventEmitterModule.forRoot()],
-  providers: [WhatsappService],
+  providers: [WpconfigService],
   controllers: [BotController],
 })
-export class WhatsappModule {}
+export class WpconfigModule {}
