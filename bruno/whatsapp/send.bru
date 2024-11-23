@@ -5,21 +5,24 @@ meta {
 }
 
 post {
-  url: {{host}}/whatsapp/send
+  url: {{host}}/wpbot/send
   body: json
-  auth: none
+  auth: bearer
 }
 
 headers {
   : 
 }
 
+auth:bearer {
+  token: {{jwt}}
+}
+
 body:json {
   {
-    "number": "553195790332",
-    "message": "Fala menolo, estamos on do bruno"
+    "number": "553384350680",
+    "message": "OI"
   }
-  
 }
 
 body:multipart-form {

@@ -4,15 +4,10 @@ meta {
   seq: 2
 }
 
-post {
-  url: {{host}}/whatsapp/logout
+get {
+  url: {{host}}/wpconfig/qrcode
   body: json
   auth: none
-}
-
-body:json {
-  
-  
 }
 
 body:multipart-form {
