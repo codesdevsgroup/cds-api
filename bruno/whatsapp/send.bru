@@ -5,19 +5,23 @@ meta {
 }
 
 post {
-  url: {{host}}/whatsapp/send
+  url: {{host}}/wpbot/send
   body: json
-  auth: none
+  auth: bearer
 }
 
 headers {
   : 
 }
 
+auth:bearer {
+  token: {{jwt}}
+}
+
 body:json {
   {
-    "number": "553391214145",
-    "message": "o bot já envia mensagens \n haha"
+    "number": "553384350680",
+    "message": "OI"
   }
 }
 

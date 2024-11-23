@@ -12,7 +12,7 @@ import { EmailService } from './services/email/email.service';
 import { ConfigModule } from './routes/config/config.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { WpconfigModule } from './routes/wpconfig/wpconfig.module';
+import { WpbotModule } from './routes/wpbot/wpbot.module';
 
 @Module({
   imports: [
@@ -36,7 +36,7 @@ import { WpconfigModule } from './routes/wpconfig/wpconfig.module';
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),
-    WpconfigModule,
+    WpbotModule,
   ],
   providers: [
     EmailProcessor,

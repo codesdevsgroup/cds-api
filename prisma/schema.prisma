@@ -277,3 +277,14 @@ model CorporateClient {
 
   @@map("corporate_client")
 }
+
+model WpSession {
+  id          String   @id @default(uuid())
+  sessionId   String   @unique
+  description String
+  dataPath    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("wp_session")
+}
