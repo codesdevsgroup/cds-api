@@ -56,18 +56,14 @@ export class WpbotService implements OnModuleInit {
   }
 
   // Carrega IDs de sessão de um arquivo e inicializa-as
-  private loadSessions() {
-    if (fs.existsSync(this.sessionsFile)) {
-      const sessionIds: string[] = JSON.parse(
-        fs.readFileSync(this.sessionsFile, 'utf-8'),
-      );
-      sessionIds.forEach((sessionId) =>
-        this.initializeSession({
-          sessionId,
-          description: 'Default description',
-        }),
-      );
-    }
+  private async loadSessions() {
+    const sessions = await this.prisma.wpSession.findMany();
+    sessions.forEach((session) => {
+      this.initializeSession({
+        sessionId: session.sessionId,
+        description: session.description,
+      });
+    });
   }
 
   // Inicializa uma nova sessão do WhatsApp com o ID e descrição fornecidos
@@ -126,9 +122,15 @@ export class WpbotService implements OnModuleInit {
     this.saveSessionToDb(sessionId, description, dataPath);
   }
 
-  // Retorna todas as sessões ativas
-  getActiveSessions(): string[] {
-    return Array.from(this.clients.keys());
+  // Retorna todas as sessões ativas com descrição
+  async getActiveSessions(): Promise<
+    { sessionId: string; description: string }[]
+  > {
+    const sessions = await this.prisma.wpSession.findMany();
+    return sessions.map((session) => ({
+      sessionId: session.sessionId,
+      description: session.description,
+    }));
   }
 
   // Deleta uma sessão do WhatsApp com o ID fornecido

@@ -66,8 +66,8 @@ export class WpbotController {
 
   // Lista todas as sessões ativas
   @Get('active-sessions')
-  getActiveSessions(@Res() response: Response) {
-    const activeSessions = this.wpbotService.getActiveSessions();
+  async getActiveSessions(@Res() response: Response) {
+    const activeSessions = await this.wpbotService.getActiveSessions();
     return response.status(200).send(activeSessions);
   }
 

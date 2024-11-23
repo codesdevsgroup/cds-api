@@ -1,0 +1,17 @@
+meta {
+  name: delete
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{host}}/wpbot/delete
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "sessionId": "1"
+  }
+}
