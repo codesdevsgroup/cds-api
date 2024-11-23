@@ -14,6 +14,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { WpbotModule } from './routes/wpbot/wpbot.module';
 import { WpmsgModule } from './routes/wpmsg/wpmsg.module';
+import { ChatModule } from './routes/chat/chat.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { WpmsgModule } from './routes/wpmsg/wpmsg.module';
     }),
     WpbotModule,
     WpmsgModule,
+    ChatModule,
   ],
   providers: [
     EmailProcessor,

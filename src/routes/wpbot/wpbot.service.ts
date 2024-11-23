@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Client, LocalAuth } from 'whatsapp-web.js';
 import * as qrcodeTerminal from 'qrcode-terminal';
+import * as QRCode from 'qrcode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaService } from '../../services/prisma/prisma.service';
@@ -11,6 +12,7 @@ export class WpbotService implements OnModuleInit {
   private readonly logger = new Logger(WpbotService.name);
   private clients: Map<string, Client> = new Map(); // Armazena múltiplos clientes
   private readonly sessionsFile = './auth/sessions.json'; // Arquivo para armazenar IDs de sessão
+  private qrCodes: { [sessionId: string]: string } = {}; // Armazena os QR Codes por sessão
 
   constructor(
     private eventEmitter: EventEmitter2,
@@ -60,13 +62,22 @@ export class WpbotService implements OnModuleInit {
         fs.readFileSync(this.sessionsFile, 'utf-8'),
       );
       sessionIds.forEach((sessionId) =>
-        this.initializeSession(sessionId, 'Default description'),
+        this.initializeSession({
+          sessionId,
+          description: 'Default description',
+        }),
       );
     }
   }
 
   // Inicializa uma nova sessão do WhatsApp com o ID e descrição fornecidos
-  initializeSession(sessionId: string, description: string) {
+  initializeSession({
+    sessionId,
+    description,
+  }: {
+    sessionId: string;
+    description: string;
+  }) {
     if (this.clients.has(sessionId)) {
       this.logger.warn(`Sessão "${sessionId}" já está inicializada.`);
       return;
@@ -80,9 +91,11 @@ export class WpbotService implements OnModuleInit {
     });
 
     // Evento para geração de QR code
-    client.on('qr', (qr) => {
+    client.on('qr', async (qr) => {
       this.logger.log(`QR Code gerado para a sessão "${sessionId}".`);
-      this.eventEmitter.emit(`qrcode.created.${sessionId}`, qr);
+      const base64QrCode = await QRCode.toDataURL(qr);
+      this.qrCodes[sessionId] = base64QrCode;
+      this.eventEmitter.emit(`qrcode.created.${sessionId}`, base64QrCode);
       qrcodeTerminal.generate(qr, { small: true });
     });
 
@@ -110,10 +123,6 @@ export class WpbotService implements OnModuleInit {
     this.clients.set(sessionId, client);
     this.saveSessions();
     this.saveSessionToDb(sessionId, description, dataPath);
-  }
-
-  getClients(): Map<string, Client> {
-    return this.clients;
   }
 
   // Retorna todas as sessões ativas
@@ -175,5 +184,10 @@ export class WpbotService implements OnModuleInit {
 
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  // Obtém o QR Code em base64 para uma sessão especificada
+  getQrCode(sessionId: string): string {
+    return this.qrCodes[sessionId];
   }
 }

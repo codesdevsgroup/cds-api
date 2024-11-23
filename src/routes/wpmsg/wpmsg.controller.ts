@@ -20,12 +20,7 @@ export class WpmsgController {
   ) {
     const { number, message } = sendMessageDto;
     try {
-      await this.wpmsgService.sendMessage(
-        sessionId,
-        number,
-        message,
-        this.wpbotService.getClients(),
-      );
+      await this.wpmsgService.sendMessage(sessionId, number, message);
       return response.status(200).send('Mensagem enviada com sucesso!');
     } catch (error) {
       return response
