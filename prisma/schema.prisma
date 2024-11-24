@@ -54,24 +54,25 @@ model User {
 
 // Modelo de Membros da Equipe (Funcionários)
 model TeamMembers {
-  id             Int                    @id @default(autoincrement())
-  name           String                 @db.VarChar(255)
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
-  deletedAt      DateTime?
-  isDeleted      Boolean                @default(false)
-  workStartTime  DateTime
-  workEndTime    DateTime
-  discountLimit  Float                  @default(0)
-  commissionRate Float                  @default(0)
-  position       String                 @db.VarChar(100)
-  hireDate       DateTime
-  salary         Float
-  users          User[]
-  departments    TeamMemberDepartment[]
-  os             OS[]
-  whatsapp       WhatsAppInstance[]
-  invitedMembers InvitedMember[]
+  id              Int                    @id @default(autoincrement())
+  name            String                 @db.VarChar(255)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @default(now())
+  deletedAt       DateTime?
+  isDeleted       Boolean                @default(false)
+  workStartTime   DateTime
+  workEndTime     DateTime
+  discountLimit   Float                  @default(0)
+  commissionRate  Float                  @default(0)
+  position        String                 @db.VarChar(100)
+  hireDate        DateTime
+  salary          Float
+  users           User[]
+  departments     TeamMemberDepartment[]
+  wpHelp          WpHelp[]
+  WpInvitedMember WpInvitedMember[]
+  os              OS[]
+  osHelpers       OSHelper[]
 
   @@map("team_members")
 }
@@ -124,6 +125,7 @@ model Person {
   responseSchedulers Scheduler[]       @relation("SchedulerResponsePerson")
   os                 OS[]
   corporateClient    CorporateClient[]
+  wpNumbers          WpNumber[]
 
   @@map("person")
 }
@@ -162,7 +164,7 @@ model Scheduler {
   id               Int       @id @default(autoincrement())
   personId         Int
   userId           String // Usuário que fez o Agendamento
-  responsePersonId Int? // Usuário que fará o Procedimento
+  teamMemberId     Int // Membro da equipe que fará o atendimento
   processId        Int
   returnDay        DateTime?
   price            Float
@@ -175,6 +177,7 @@ model Scheduler {
   isDeleted        Boolean   @default(false)
   person           Person    @relation("SchedulerPerson", fields: [personId], references: [id])
   user             User      @relation(fields: [userId], references: [id])
+  responsePersonId Int?
   personResponse   Person?   @relation("SchedulerResponsePerson", fields: [responsePersonId], references: [id])
   process          Processes @relation(fields: [processId], references: [id])
 
@@ -200,84 +203,59 @@ model Processes {
 
 // Modelo de Ordem de Serviço (OS)
 model OS {
-  id               Int               @id @default(autoincrement())
-  description      String            @db.VarChar(255)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  deletedAt        DateTime?
-  isDeleted        Boolean           @default(false)
-  personId         Int
-  teamMemberId     Int
-  person           Person            @relation(fields: [personId], references: [id])
-  teamMember       TeamMembers       @relation(fields: [teamMemberId], references: [id])
-  whatsappMessages WhatsAppMessage[]
+  id           Int         @id @default(autoincrement())
+  description  String      @db.VarChar(255)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  deletedAt    DateTime?
+  isDeleted    Boolean     @default(false)
+  personId     Int
+  teamMemberId Int
+  person       Person      @relation(fields: [personId], references: [id])
+  wpMessages   WpMessage[]
+  teamMember   TeamMembers @relation(fields: [teamMemberId], references: [id])
+  osHelpers    OSHelper[] // Relação muitos-para-muitos com TeamMembers através de OSHelper
 
   @@map("os")
 }
 
-// Modelo de Mensagens do WhatsApp
-enum MessageType {
-  SENT
-  RECEIVED
-}
+// Tabela intermediária para a relação muitos-para-muitos entre OS e TeamMembers
+model OSHelper {
+  osId         Int
+  teamMemberId Int
+  os           OS          @relation(fields: [osId], references: [id])
+  teamMember   TeamMembers @relation(fields: [teamMemberId], references: [id])
 
-model WhatsAppInstance {
-  id                Int               @id @default(autoincrement())
-  startTime         DateTime          @default(now())
-  endTime           DateTime?
-  handledByMemberId Int // ID do membro da equipe responsável pelo atendimento
-  teamMember        TeamMembers       @relation(fields: [handledByMemberId], references: [id])
-  whatsappMessages  WhatsAppMessage[] // Relação um-para-muitos com WhatsAppMessage
-  invitedMembers    InvitedMember[] // Relação muitos-para-muitos com TeamMembers através de InvitedMember
-
-  @@map("whatsapp_instance")
-}
-
-model WhatsAppMessage {
-  id                 Int               @id @default(autoincrement())
-  timestamp          DateTime          @default(now())
-  content            String            @db.Text
-  osId               Int
-  messageType        MessageType // Tipo de mensagem (ENVIADA ou RECEBIDA)
-  os                 OS                @relation(fields: [osId], references: [id], onDelete: Cascade)
-  whatsappInstanceId Int? // Chave estrangeira para WhatsAppInstance
-  whatsappInstance   WhatsAppInstance? @relation(fields: [whatsappInstanceId], references: [id])
-
-  @@map("whatsapp_message")
-}
-
-model InvitedMember {
-  whatsappInstanceId Int
-  teamMemberId       Int
-  whatsappInstance   WhatsAppInstance @relation(fields: [whatsappInstanceId], references: [id])
-  teamMember         TeamMembers      @relation(fields: [teamMemberId], references: [id])
-
-  @@id([whatsappInstanceId, teamMemberId])
-  @@map("invited_member")
+  @@id([osId, teamMemberId])
+  @@map("os_helper")
 }
 
 // Modelo de empresa cliente do sistema
 model CorporateClient {
-  id          Int       @id @default(autoincrement())
+  id          Int                       @id @default(autoincrement())
   personId    Int
-  name        String    @db.VarChar(80)
-  fantasyName String?   @db.VarChar(80)
-  cpfCnpj     String?   @db.VarChar(14)
-  email       String    @unique @db.VarChar(80)
-  phone1      String?   @db.VarChar(20)
-  phone2      String?   @db.VarChar(20)
+  name        String                    @db.VarChar(80)
+  fantasyName String?                   @db.VarChar(80)
+  cpfCnpj     String?                   @db.VarChar(14)
+  email       String                    @unique @db.VarChar(80)
+  phone1      String?                   @db.VarChar(20)
+  phone2      String?                   @db.VarChar(20)
   notes       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
   deletedAt   DateTime?
-  isDeleted   Boolean   @default(false)
-  addressId   Int?      @unique
-  address     Address?  @relation(fields: [addressId], references: [id])
-  person      Person    @relation(fields: [personId], references: [id])
+  isDeleted   Boolean                   @default(false)
+  addressId   Int?                      @unique
+  address     Address?                  @relation(fields: [addressId], references: [id])
+  person      Person                    @relation(fields: [personId], references: [id])
+  wpNumbers   CorporateClientWpNumber[] // Relação muitos-para-muitos com WpNumber
 
   @@map("corporate_client")
 }
 
+// Tabelas destinadas ao bot de WhatsApp
+
+// Modelo de Sessões do WhatsApp
 model WpSession {
   id          String   @id @default(uuid())
   sessionId   String   @unique
@@ -287,4 +265,76 @@ model WpSession {
   updatedAt   DateTime @updatedAt
 
   @@map("wp_session")
+}
+
+// Grava detalhes de cada chamado
+model WpHelp {
+  id                Int               @id @default(autoincrement())
+  wpNumberId        Int // ID do número de WhatsApp
+  startTime         DateTime          @default(now())
+  endTime           DateTime?
+  handledByMemberId Int // ID do membro da equipe responsável pelo atendimento
+  teamMember        TeamMembers       @relation(fields: [handledByMemberId], references: [id])
+  wpNumber          WpNumber          @relation(fields: [wpNumberId], references: [id])
+  wpMessages        WpMessage[] // Relação um-para-muitos com WhatsAppMessage
+  invitedMembers    WpInvitedMember[] // Relação muitos-para-muitos com TeamMembers através de WpInvitedMember
+
+  @@map("wp_help")
+}
+
+// Modelo de Mensagens do WhatsApp
+enum WpMessageType {
+  SENT
+  RECEIVED
+}
+
+// Armazena as mensagens trocadas entre o bot e o cliente
+model WpMessage {
+  id            Int           @id @default(autoincrement())
+  timestamp     DateTime      @default(now())
+  content       String        @db.Text
+  osId          Int
+  wpMessageType WpMessageType // Tipo da mensagem (enviada ou recebida)
+  os            OS            @relation(fields: [osId], references: [id], onDelete: Cascade)
+  wpHelpId      Int // ID do chamado
+  wpHelp        WpHelp        @relation(fields: [wpHelpId], references: [id])
+
+  @@map("whatsapp_message")
+}
+
+// Lista de membros convidados para atendimento
+model WpInvitedMember {
+  whatsappInstanceId Int
+  teamMemberId       Int
+  teamMember         TeamMembers @relation(fields: [teamMemberId], references: [id])
+  WpHelp             WpHelp?     @relation(fields: [wpHelpId], references: [id])
+  wpHelpId           Int?
+
+  @@id([whatsappInstanceId, teamMemberId])
+  @@map("invited_member")
+}
+
+// Tabela intermediária para salvar clientes que chamarem no WhatsApp ou grava número de quem iniciamos um chamado
+model WpNumber {
+  id               Int                       @id @default(autoincrement())
+  number           String
+  personId         Int?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+  person           Person?                   @relation(fields: [personId], references: [id])
+  corporateClients CorporateClientWpNumber[] // Relação muitos-para-muitos com CorporateClient
+  WpHelp           WpHelp[]
+
+  @@map("wp_number")
+}
+
+// Tabela intermediária para a relação muitos-para-muitos entre CorporateClient e WpNumber
+model CorporateClientWpNumber {
+  corporateClientId Int
+  wpNumberId        Int
+  corporateClient   CorporateClient @relation(fields: [corporateClientId], references: [id])
+  wpNumber          WpNumber        @relation(fields: [wpNumberId], references: [id])
+
+  @@id([corporateClientId, wpNumberId])
+  @@map("corporate_client_wp_number")
 }
