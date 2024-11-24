@@ -261,17 +261,25 @@ model CorporateClient {
 model WpSession {
   number          String            @id // Número do WhatsApp (ID único da sessão)
   name            String // Nome da sessão
-  status          String // Status da sessão (e.g., "PENDING", "CONNECTED", "DISCONNECTED")
+  status          WpSessionStatus // Status da sessão (e.g., "PENDING", "CONNECTED", "DISCONNECTED")
   qrCode          String? // QR code gerado para login (se aplicável)
   sessionData     Json? // Dados persistentes da sessão (como tokens ou credenciais serializadas)
   createdAt       DateTime          @default(now()) // Timestamp de criação
   updatedAt       DateTime          @updatedAt // Atualizado automaticamente quando modificado
+  createdBy       Int? // ID do usuário que criou o registro
+  updatedBy       Int? // ID do usuário que atualizou o registro
   wpHelp          WpHelp[] // Atendimentos associados
   WpMessage       WpMessage[]
   WpInvitedMember WpInvitedMember[]
   WpNumberSession WpNumberSession[]
 
   @@map("wp_session")
+}
+
+enum WpSessionStatus {
+  PENDING
+  CONNECTED
+  DISCONNECTED
 }
 
 // Grava detalhes de cada chamado
@@ -300,21 +308,36 @@ model WpHelp {
 
 // Armazena as mensagens trocadas entre o bot e o cliente
 model WpMessage {
-  id              Int           @id @default(autoincrement())
-  timestamp       DateTime      @default(now()) // Timestamp da mensagem
-  content         String        @db.Text // Conteúdo da mensagem
-  osId            Int? // ID da Ordem de Serviço associada
-  wpMessageType   WpMessageType // Tipo da mensagem enviada ou recebida
-  os              OS?           @relation(fields: [osId], references: [id], onDelete: Cascade)
-  wpHelpId        Int? // ID do atendimento relacionado
-  wpHelp          WpHelp?       @relation(fields: [wpHelpId], references: [id])
-  wpSessionNumber String // Número do WhatsApp associado
-  wpSession       WpSession     @relation(fields: [wpSessionNumber], references: [number])
+  id              Int                @id @default(autoincrement())
+  messageId       String             @unique
+  timestamp       DateTime           @default(now())
+  content         String             @db.Text
+  osId            Int?
+  os              OS?                @relation(fields: [osId], references: [id], onDelete: Cascade)
+  wpHelpId        Int?
+  wpHelp          WpHelp?            @relation(fields: [wpHelpId], references: [id])
+  wpSessionNumber String
+  wpSession       WpSession          @relation(fields: [wpSessionNumber], references: [number])
+  readStatus      Boolean            @default(false) // Status de leitura da mensagem
+  responseTime    Int? // Tempo de resposta (em segundos)
+  status          WpMessageStatus // Status da mensagem: enviada, entregue, lida, etc.
+  direction       WpMessageDirection // Direção: enviada ou recebida
+  isAutomated     Boolean            @default(false) // Se foi gerada automaticamente pelo bot
+  wpNumberId      Int? // ID do número de WhatsApp associado
+  wpNumber        WpNumber?          @relation(fields: [wpNumberId], references: [id])
 
   @@map("whatsapp_message")
 }
 
-enum WpMessageType {
+enum WpMessageStatus {
+  SENT // A mensagem foi enviada do cliente, mas ainda não foi entregue ao destinatário.
+  DELIVERED // A mensagem foi entregue ao destinatário com sucesso.
+  READ // O destinatário leu a mensagem (exibido como "check duplo azul").
+  PENDING // A mensagem ainda não foi enviada ou entregue, aguardando processamento.
+  FAILED // A mensagem falhou ao ser enviada ou entregue devido a algum erro (ex: falha de conexão).
+}
+
+enum WpMessageDirection {
   SENT
   RECEIVED
 }
@@ -335,14 +358,15 @@ model WpInvitedMember {
 // Tabela intermediária para salvar clientes que chamaram no WhatsApp ou grava número de quem iniciamos um chamado
 model WpNumber {
   id               Int                       @id @default(autoincrement())
-  number           String // Número de telefone associado
-  personId         Int? // ID da pessoa associada
-  createdAt        DateTime                  @default(now()) // Timestamp de criação
-  updatedAt        DateTime                  @updatedAt // Timestamp de atualização
+  number           String                    @unique // Add @unique to allow unique queries
+  personId         Int?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
   person           Person?                   @relation(fields: [personId], references: [id])
-  WpHelp           WpHelp[] // Relacionamento com WpHelp
-  wpSessions       WpNumberSession[] // Relacionamento muitos-para-muitos via tabela intermediária
-  corporateClients CorporateClientWpNumber[] // Relação muitos-para-muitos com CorporateClient
+  WpHelp           WpHelp[]
+  wpSessions       WpNumberSession[]
+  corporateClients CorporateClientWpNumber[]
+  wpMessages       WpMessage[]
 
   @@map("wp_number")
 }
@@ -353,6 +377,8 @@ model WpNumberSession {
   wpSessionNumber String
   wpNumber        WpNumber  @relation(fields: [wpNumberId], references: [id])
   wpSession       WpSession @relation(fields: [wpSessionNumber], references: [number])
+  createdBy       Int? // ID do usuário que criou o registro
+  updatedBy       Int? // ID do usuário que atualizou o registro
 
   @@id([wpNumberId, wpSessionNumber]) // Chave composta
   @@map("wp_number_session")

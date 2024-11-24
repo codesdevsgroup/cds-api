@@ -1,11 +1,12 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Client, LocalAuth, Message } from 'whatsapp-web.js';
+import { Client, LocalAuth } from 'whatsapp-web.js';
 import * as qrcodeTerminal from 'qrcode-terminal';
 import * as QRCode from 'qrcode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaService } from '../../services/prisma/prisma.service';
+import {WpMessageStatus} from "@prisma/client";
 
 @Injectable()
 export class WpbotService implements OnModuleInit {
@@ -38,14 +39,7 @@ export class WpbotService implements OnModuleInit {
     await this.prisma.wpSession.upsert({
       where: { number },
       update: { name, sessionData: dataPath },
-      create: { number, name, sessionData: dataPath, status: 'active' }, // Add the required status property
-    });
-  }
-
-  // Deleta detalhes da sessão do banco de dados
-  private async deleteSessionFromDb(number: string) {
-    await this.prisma.wpSession.delete({
-      where: { number },
+      create: { number, name, sessionData: dataPath, status: 'PENDING' },
     });
   }
 
@@ -80,16 +74,100 @@ export class WpbotService implements OnModuleInit {
       }),
     });
 
-    client.on('qr', (qr) => {
+    client.on('qr', async (qr) => {
       this.qrCodes[number] = qr;
       qrcodeTerminal.generate(qr, { small: true });
       this.logger.log(`QR Code gerado para a sessão "${number}".`);
+
+      // Armazena o QR Code em base64
+      const qrCodeBase64 = await QRCode.toDataURL(qr);
+      this.qrCodes[number] = qrCodeBase64;
+    });
+
+    client.on('ready', () => {
+      this.logger.log(`Sessão "${number}" está pronta.`);
+      this.prisma.wpSession.update({
+        where: { number },
+        data: { status: 'CONNECTED' },
+      });
+    });
+
+    client.on('authenticated', () => {
+      this.logger.log(`Sessão "${number}" autenticada com sucesso.`);
+      this.prisma.wpSession.update({
+        where: { number },
+        data: { status: 'CONNECTED' },
+      });
+    });
+
+    client.on('auth_failure', (msg) => {
+      this.logger.error(`Falha na autenticação da sessão "${number}": ${msg}`);
+      this.prisma.wpSession.update({
+        where: { number },
+        data: { status: 'DISCONNECTED' },
+      });
+    });
+
+    client.on('disconnected', (reason) => {
+      this.logger.warn(`Sessão "${number}" desconectada: ${reason}`);
+      this.prisma.wpSession.update({
+        where: { number },
+        data: { status: 'DISCONNECTED' },
+      });
+      this.clients.delete(number);
+    });
+
+    client.on('message_ack', async (message, ack) => {
+      const messageId = message.id._serialized; // ou message.id
+      let status: WpMessageStatus;
+
+      switch (ack) {
+        case 1:
+          status = 'SENT'; // Mensagem enviada ao servidor
+          break;
+        case 2:
+          status = 'DELIVERED'; // Mensagem entregue ao destinatário
+          break;
+        case 3:
+          status = 'READ'; // Mensagem lida
+          break;
+        case 0:
+          status = 'FAILED'; // Falha ao enviar
+          break;
+        default:
+          status = 'SENT'; // Caso o ack seja outro
+          break;
+      }
+
+      try {
+        // Atualize o status no banco de dados
+        await this.updateMessageStatus(messageId, status);
+        this.logger.log(`Status da mensagem ID ${messageId} atualizado para ${status}.`);
+      } catch (error) {
+        this.logger.error(`Erro ao atualizar status da mensagem ID ${messageId}: ${error.message}`);
+      }
     });
 
     client.initialize();
     this.clients.set(number, client);
     this.saveSessions();
     this.saveSessionToDb(number, name, dataPath);
+  }
+
+  async updateMessageStatus(messageId: string, status: WpMessageStatus) {
+    try {
+      const updatedMessage = await this.prisma.wpMessage.update({
+        where: {
+          messageId: messageId, // Use o identificador correto
+        },
+        data: {
+          status: status, // Atualiza o status
+        },
+      });
+      return updatedMessage;
+    } catch (error) {
+      throw new Error(`Erro ao atualizar status da mensagem: ${error.message}`);
+    }
   }
 
   // Retorna todas as sessões ativas com nome
@@ -101,38 +179,40 @@ export class WpbotService implements OnModuleInit {
     }));
   }
 
-  // Deleta uma sessão do WhatsApp com o número fornecido
-  async deleteSession(number: string) {
+  async deleteSession(number: string): Promise<void> {
+    this.logger.log(`Tentando deletar a sessão "${number}".`);
+
     const client = this.clients.get(number);
     if (!client) {
-      throw new Error(`Sessão "${number}" não encontrada.`);
+      this.logger.warn(
+        `Tentativa de deletar a sessão "${number}", mas o cliente já foi removido. Clientes disponíveis: ${Array.from(this.clients.keys()).join(', ')}`,
+      );
+      return; // Retorna silenciosamente, já que a sessão não existe mais
     }
 
-    client.destroy();
-    this.clients.delete(number);
-    this.saveSessions();
-    await this.deleteSessionFromDb(number);
-    delete this.qrCodes[number]; // Remove o QR code quando a sessão é deletada
+    try {
+      // 1. Destruir o cliente e remover da memória
+      await client.destroy();
+      this.clients.delete(number);
+      this.saveSessions();
+      await this.deleteSessionFromDb(number);
+      delete this.qrCodes[number];
 
-    const sessionPath = path.join('./auth', number);
-    if (fs.existsSync(sessionPath)) {
-      try {
+      // 2. Remover diretório de dados de sessão
+      const sessionPath = path.resolve('./auth', number); // Caminho absoluto para evitar problemas
+      if (fs.existsSync(sessionPath)) {
         await this.retryDeleteFile(sessionPath);
-      } catch (error) {
-        if (error.code === 'EBUSY') {
-          this.logger.warn(
-            `Recurso ocupado ou bloqueado ao deletar a sessão "${number}": ${error.message}`,
-          );
-        } else {
-          this.logger.error(
-            `Erro ao deletar a sessão "${number}": ${error.message}`,
-          );
-          throw error;
-        }
+      } else {
+        this.logger.warn(`Caminho da sessão "${sessionPath}" não encontrado.`);
       }
-    }
 
-    this.logger.log(`Sessão "${number}" deletada com sucesso.`);
+      this.logger.log(`Sessão "${number}" deletada com sucesso.`);
+    } catch (error) {
+      this.logger.error(
+        `Erro ao deletar a sessão "${number}": ${error.message}`,
+      );
+      throw error; // Relançar o erro após log
+    }
   }
 
   private async retryDeleteFile(
@@ -142,12 +222,19 @@ export class WpbotService implements OnModuleInit {
   ): Promise<void> {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        fs.rmSync(filePath, { recursive: true, force: true });
+        await fs.promises.rm(filePath, { recursive: true, force: true });
+        this.logger.log(`Diretório "${filePath}" deletado com sucesso.`);
         return;
       } catch (error) {
         if (error.code === 'EBUSY' && attempt < retries) {
+          this.logger.warn(
+            `Tentativa ${attempt} falhou ao deletar "${filePath}". Recurso ocupado. Tentando novamente em ${delay}ms.`,
+          );
           await this.delay(delay);
         } else {
+          this.logger.error(
+            `Erro ao deletar "${filePath}" na tentativa ${attempt}: ${error.message}`,
+          );
           throw error;
         }
       }
@@ -156,6 +243,21 @@ export class WpbotService implements OnModuleInit {
 
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  // Atualização do banco de dados para deletar a sessão
+  private async deleteSessionFromDb(number: string): Promise<void> {
+    try {
+      await this.prisma.wpSession.delete({
+        where: { number },
+      });
+      this.logger.log(`Sessão "${number}" removida do banco de dados.`);
+    } catch (error) {
+      this.logger.error(
+        `Erro ao remover sessão "${number}" do banco: ${error.message}`,
+      );
+      throw error;
+    }
   }
 
   // Obtém o QR Code em base64 para uma sessão especificada
@@ -174,21 +276,41 @@ export class WpbotService implements OnModuleInit {
       throw new Error(`Sessão "${session_id}" não encontrada.`);
     }
 
-    // Verifique se o número foi corretamente formatado
     const chatId = `${String(number)}@c.us`; // Forçar o número como string
     this.logger.log(`Enviando mensagem para ${chatId}: "${message}"`);
 
     try {
       const sentMessage = await client.sendMessage(chatId, message);
-      this.logger.log(`Mensagem enviada para ${number} pela sessão "${session_id}".`);
+      this.logger.log(
+          `Mensagem enviada para ${number} pela sessão "${session_id}".`,
+      );
 
-      // Log detalhado da mensagem enviada (sem usar console.log)
-      this.logger.debug(`Mensagem enviada detalhes:`);
-      this.logger.debug(`De: ${sentMessage.from}`);
-      this.logger.debug(`Para: ${sentMessage.to}`);
-      this.logger.debug(`ID da mensagem: ${sentMessage.id._serialized}`);
-      this.logger.debug(`Timestamp: ${sentMessage.timestamp}`);
-      this.logger.debug(`Tipo de mensagem: ${sentMessage.type}`);
+      const cleanNumber = (id: string) => id.replace('@c.us', '');
+
+      const wpNumber = await this.prisma.wpNumber.upsert({
+        where: { number: cleanNumber(sentMessage.to) },
+        update: {},
+        create: { number: cleanNumber(sentMessage.to) },
+      });
+
+      const wpMessage = await this.prisma.wpMessage.create({
+        data: {
+          messageId: sentMessage.id._serialized, // Salvando o messageId único
+          content: message,
+          wpSession: {
+            connect: { number: session_id },
+          },
+          status: 'SENT',
+          direction: 'SENT',
+          timestamp: new Date(sentMessage.timestamp * 1000),
+          isAutomated: false,
+          wpNumber: {
+            connect: { id: wpNumber.id },
+          },
+        },
+      });
+
+      this.logger.log(`Mensagem salva no banco de dados: ID ${wpMessage.id}`);
     } catch (error) {
       this.logger.error(`Erro ao enviar mensagem: ${error.message}`);
       throw error; // Re-throws the error after logging it

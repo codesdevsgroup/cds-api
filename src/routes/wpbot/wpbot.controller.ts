@@ -34,7 +34,9 @@ export class WpbotController {
       this.wpbotService.initializeSession({ number, name });
       return response
         .status(200)
-        .send(`Session "${number}" initialized. Scan the QR Code to connect.`);
+        .send(
+          `Sessão "${number}" inicializada. Escaneie o QR Code para conectar.`,
+        );
     } catch (error) {
       return response
         .status(500)
