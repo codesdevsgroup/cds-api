@@ -271,7 +271,6 @@ model WpSession {
   wpHelp          WpHelp[] // Atendimentos associados
   WpMessage       WpMessage[]
   WpInvitedMember WpInvitedMember[]
-  WpNumberSession WpNumberSession[]
 
   @@map("wp_session")
 }
@@ -363,25 +362,12 @@ model WpNumber {
   createdAt        DateTime                  @default(now())
   updatedAt        DateTime                  @updatedAt
   person           Person?                   @relation(fields: [personId], references: [id])
+  wpSessions       String?
   WpHelp           WpHelp[]
-  wpSessions       WpNumberSession[]
   corporateClients CorporateClientWpNumber[]
   wpMessages       WpMessage[]
 
   @@map("wp_number")
-}
-
-// Tabela intermediária para a relação muitos-para-muitos entre WpNumber e WpSession
-model WpNumberSession {
-  wpNumberId      Int
-  wpSessionNumber String
-  wpNumber        WpNumber  @relation(fields: [wpNumberId], references: [id])
-  wpSession       WpSession @relation(fields: [wpSessionNumber], references: [number])
-  createdBy       Int? // ID do usuário que criou o registro
-  updatedBy       Int? // ID do usuário que atualizou o registro
-
-  @@id([wpNumberId, wpSessionNumber]) // Chave composta
-  @@map("wp_number_session")
 }
 
 // Tabela intermediária para a relação muitos-para-muitos entre WpNumber e CorporateClient

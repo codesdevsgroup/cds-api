@@ -6,7 +6,7 @@ import * as QRCode from 'qrcode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaService } from '../../services/prisma/prisma.service';
-import {WpMessageStatus} from "@prisma/client";
+import { WpMessageStatus } from '@prisma/client';
 
 @Injectable()
 export class WpbotService implements OnModuleInit {
@@ -80,8 +80,7 @@ export class WpbotService implements OnModuleInit {
       this.logger.log(`QR Code gerado para a sessão "${number}".`);
 
       // Armazena o QR Code em base64
-      const qrCodeBase64 = await QRCode.toDataURL(qr);
-      this.qrCodes[number] = qrCodeBase64;
+      this.qrCodes[number] = await QRCode.toDataURL(qr);
     });
 
     client.on('ready', () => {
@@ -142,9 +141,13 @@ export class WpbotService implements OnModuleInit {
       try {
         // Atualize o status no banco de dados
         await this.updateMessageStatus(messageId, status);
-        this.logger.log(`Status da mensagem ID ${messageId} atualizado para ${status}.`);
+        this.logger.log(
+          `Status da mensagem ID ${messageId} atualizado para ${status}.`,
+        );
       } catch (error) {
-        this.logger.error(`Erro ao atualizar status da mensagem ID ${messageId}: ${error.message}`);
+        this.logger.error(
+          `Erro ao atualizar status da mensagem ID ${messageId}: ${error.message}`,
+        );
       }
     });
 
@@ -156,16 +159,27 @@ export class WpbotService implements OnModuleInit {
 
   async updateMessageStatus(messageId: string, status: WpMessageStatus) {
     try {
-      const updatedMessage = await this.prisma.wpMessage.update({
-        where: {
-          messageId: messageId, // Use o identificador correto
-        },
-        data: {
-          status: status, // Atualiza o status
-        },
+      const message = await this.prisma.wpMessage.findUnique({
+        where: { messageId },
       });
+
+      if (!message) {
+        this.logger.warn(
+          `Mensagem com ID ${messageId} não encontrada no banco de dados.`,
+        );
+        return; // Ignore if the message is not found
+      }
+
+      const updatedMessage = await this.prisma.wpMessage.update({
+        where: { messageId },
+        data: { status },
+      });
+
       return updatedMessage;
     } catch (error) {
+      this.logger.error(
+        `Erro ao atualizar status da mensagem ID ${messageId}: ${error.message}`,
+      );
       throw new Error(`Erro ao atualizar status da mensagem: ${error.message}`);
     }
   }
@@ -282,17 +296,21 @@ export class WpbotService implements OnModuleInit {
     try {
       const sentMessage = await client.sendMessage(chatId, message);
       this.logger.log(
-          `Mensagem enviada para ${number} pela sessão "${session_id}".`,
+        `Mensagem enviada para ${number} pela sessão "${session_id}".`,
       );
 
       const cleanNumber = (id: string) => id.replace('@c.us', '');
 
       const wpNumber = await this.prisma.wpNumber.upsert({
         where: { number: cleanNumber(sentMessage.to) },
-        update: {},
-        create: { number: cleanNumber(sentMessage.to) },
+        update: {
+          wpSessions: cleanNumber(sentMessage.from), // Atualiza a sessão com o número limpo de 'from'
+        },
+        create: {
+          number: cleanNumber(sentMessage.to),
+          wpSessions: cleanNumber(sentMessage.from), // Cria o número com a sessão limpa
+        },
       });
-
       const wpMessage = await this.prisma.wpMessage.create({
         data: {
           messageId: sentMessage.id._serialized, // Salvando o messageId único
