@@ -15,4 +15,11 @@ export class SendMessageDto {
   })
   @IsString()
   message: string;
+
+  @ApiProperty({
+    description: 'ID da sessão do WhatsApp',
+    example: 'session123',
+  })
+  @IsString()
+  sessionId: string;
 }

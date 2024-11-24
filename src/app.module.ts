@@ -13,8 +13,9 @@ import { ConfigModule } from './routes/config/config.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { WpbotModule } from './routes/wpbot/wpbot.module';
-import { WpmsgModule } from './routes/wpmsg/wpmsg.module';
 import { ChatModule } from './routes/chat/chat.module';
+import { ChatGateway } from './routes/chat/chat.gateway';
+import { ChatService } from './routes/chat/chat.service';
 
 @Module({
   imports: [
@@ -39,7 +40,6 @@ import { ChatModule } from './routes/chat/chat.module';
       serveRoot: '/uploads',
     }),
     WpbotModule,
-    WpmsgModule,
     ChatModule,
   ],
   providers: [
@@ -49,6 +49,12 @@ import { ChatModule } from './routes/chat/chat.module';
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
+    ChatGateway,
+    ChatService,
   ],
 })
-export class AppModule {}
+export class AppModule {
+  constructor() {
+    console.log('AppModule initialized');
+  }
+}

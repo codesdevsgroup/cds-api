@@ -1,17 +1,27 @@
 import { Injectable } from '@nestjs/common';
+import { Client } from 'whatsapp-web.js';
 
 @Injectable()
 export class ChatService {
+  private sessions: Map<string, Client> = new Map();
 
-  findAll() {
-    return `This action returns all chat`;
+  async sendMessage(
+    sessionId: string,
+    number: string,
+    message: string,
+  ): Promise<void> {
+    const client = this.sessions.get(sessionId);
+    if (!client) {
+      throw new Error(`Session with id ${sessionId} not found`);
+    }
+    await client.sendMessage(number, message);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} chat`;
+  addSession(sessionId: string, client: Client): void {
+    this.sessions.set(sessionId, client);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} chat`;
+  removeSession(sessionId: string): void {
+    this.sessions.delete(sessionId);
   }
 }

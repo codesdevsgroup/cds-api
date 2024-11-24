@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Res,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { Response } from 'express';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { IsPublic } from '../../shared/decorators/is-public.decorator';
@@ -6,6 +15,7 @@ import { WpbotService } from './wpbot.service';
 import { ApiTags } from '@nestjs/swagger';
 import { InitializeSessionDto } from './dto/initialize-session.dto';
 import { DeleteSessionDto } from './dto/delete-session.dto';
+import { SendMessageDto } from './dto/send-message.dto';
 
 @ApiTags('wpbot')
 @IsPublic()
@@ -87,6 +97,24 @@ export class WpbotController {
       return response
         .status(500)
         .send(`Erro ao deletar a sessão "${sessionId}": ${error.message}`);
+    }
+  }
+
+  @Post('send-message')
+  async sendMessage(
+    @Body() sendMessageDto: SendMessageDto, // Alterado para receber o body completo
+    @Res() response: Response,
+  ) {
+    const { sessionId, number, message } = sendMessageDto; // Obtenha o sessionId do corpo da requisição
+    try {
+      await this.wpbotService.sendMessage(sessionId, number, message);
+      return response.status(200).send('Mensagem enviada com sucesso!');
+    } catch (error) {
+      return response
+        .status(500)
+        .send(
+          `Falha ao enviar mensagem na sessão "${sessionId}": ${error.message}`,
+        );
     }
   }
 }

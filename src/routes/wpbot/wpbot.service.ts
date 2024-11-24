@@ -194,4 +194,28 @@ export class WpbotService implements OnModuleInit {
   getQrCode(sessionId: string): string {
     return this.qrCodes[sessionId];
   }
+
+  getClient(sessionId: string): Client | undefined {
+    return this.clients.get(sessionId);
+  }
+
+  // Envia uma mensagem para um número de telefone em uma sessão específica
+  async sendMessage(sessionId: string, number: string, message: string) {
+    const client = this.clients.get(sessionId);
+    if (!client) {
+      throw new Error(`Sessão "${sessionId}" não encontrada.`);
+    }
+
+    // Verifique se o número foi corretamente formatado
+    const chatId = `${String(number)}@c.us`; // Forçar o número como string
+    this.logger.log(`Enviando mensagem para ${chatId}: "${message}"`);
+
+    try {
+      await client.sendMessage(chatId, message);
+      this.logger.log(`Mensagem enviada para ${number} pela sessão "${sessionId}".`);
+    } catch (error) {
+      this.logger.error(`Erro ao enviar mensagem: ${error.message}`);
+      throw error; // Re-throws the error after logging it
+    }
+  }
 }

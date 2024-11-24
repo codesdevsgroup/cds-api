@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { LogInterceptor } from './shared/interceptors/log.interceptor';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SocketIoAdapter } from './socket-io.adapter';
 import * as cors from 'cors';
 import './logger';
 
@@ -39,6 +40,10 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
+
+  // Configurar o adaptador do Socket.IO
+  app.useWebSocketAdapter(new SocketIoAdapter(app));
+
   await app.listen(3006);
 }
 
