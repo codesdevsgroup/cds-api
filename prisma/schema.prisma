@@ -259,12 +259,14 @@ model CorporateClient {
 
 // Modelo de Sessões do WhatsApp
 model WpSession {
-  id          String   @id @default(uuid())
-  sessionId   String   @unique
+  id          String      @id @default(uuid())
+  sessionId   String      @unique
   description String
   dataPath    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  wpHelp      WpHelp[]
+  wpMessages  WpMessage[]
 
   @@map("wp_session")
 }
@@ -274,6 +276,7 @@ model WpSession {
 model WpHelp {
   id                Int               @id @default(autoincrement())
   wpNumberId        Int // ID do número de WhatsApp
+  wpSessionId       String            @unique
   startTime         DateTime          @default(now())
   endTime           DateTime?
   handledByMemberId Int? // ID do membro da equipe responsável pelo atendimento
@@ -288,14 +291,9 @@ model WpHelp {
   isInQueue         Boolean           @default(false) // Campo para saber se o atendimento está na fila de espera
   departmentId      Int? // ID do departamento na fila de espera
   department        Department?       @relation(fields: [departmentId], references: [id])
+  wpSession         WpSession         @relation(fields: [wpSessionId], references: [id])
 
   @@map("wp_help")
-}
-
-// Modelo de Mensagens do WhatsApp
-enum WpMessageType {
-  SENT
-  RECEIVED
 }
 
 // Armazena as mensagens trocadas entre o bot e o cliente
@@ -303,13 +301,21 @@ model WpMessage {
   id            Int           @id @default(autoincrement())
   timestamp     DateTime      @default(now())
   content       String        @db.Text
-  osId          Int
+  osId          Int?
   wpMessageType WpMessageType // Tipo da mensagem (enviada ou recebida)
-  os            OS            @relation(fields: [osId], references: [id], onDelete: Cascade)
-  wpHelpId      Int // ID do chamado
-  wpHelp        WpHelp        @relation(fields: [wpHelpId], references: [id])
+  os            OS?           @relation(fields: [osId], references: [id], onDelete: Cascade)
+  wpHelpId      Int?
+  wpHelp        WpHelp?       @relation(fields: [wpHelpId], references: [id])
+  wpSessionId   String
+  wpSession     WpSession     @relation(fields: [wpSessionId], references: [id])
 
   @@map("whatsapp_message")
+}
+
+// Modelo de Mensagens do WhatsApp
+enum WpMessageType {
+  SENT
+  RECEIVED
 }
 
 // Lista de membros convidados para atendimento

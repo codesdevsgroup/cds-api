@@ -24,4 +24,12 @@ export class ChatService {
   removeSession(sessionId: string): void {
     this.sessions.delete(sessionId);
   }
+
+  async getChats(sessionId: string): Promise<any> {
+    const client = this.sessions.get(sessionId);
+    if (!client) {
+      throw new Error(`Session with id ${sessionId} not found`);
+    }
+    return await client.getChats();
+  }
 }

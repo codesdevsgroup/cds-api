@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Client, LocalAuth } from 'whatsapp-web.js';
+import { Client, LocalAuth, Message } from 'whatsapp-web.js';
 import * as qrcodeTerminal from 'qrcode-terminal';
 import * as QRCode from 'qrcode';
 import * as fs from 'fs';
@@ -101,10 +101,11 @@ export class WpbotService implements OnModuleInit {
     });
 
     // Evento para recebimento de mensagens
-    client.on('message', (message) => {
+    client.on('message', async (message) => {
       this.logger.log(
         `Mensagem recebida na sessão "${sessionId}": ${message.body}`,
       );
+      await this.saveMessageToDb(message); // Salva a mensagem no banco de dados
     });
 
     // Evento para desconexão
@@ -212,10 +213,47 @@ export class WpbotService implements OnModuleInit {
 
     try {
       await client.sendMessage(chatId, message);
-      this.logger.log(`Mensagem enviada para ${number} pela sessão "${sessionId}".`);
+      this.logger.log(
+        `Mensagem enviada para ${number} pela sessão "${sessionId}".`,
+      );
     } catch (error) {
       this.logger.error(`Erro ao enviar mensagem: ${error.message}`);
       throw error; // Re-throws the error after logging it
     }
+  }
+
+  // Método para salvar a mensagem no banco de dados
+  private async saveMessageToDb(message: Message) {
+    const osId = null; // Substitua pela lógica real para determinar osId, se disponível
+    const wpHelpId = null; // Substitua pela lógica real para determinar wpHelpId, se disponível
+    const wpSessionId = 'some-session-id'; // Substitua pela lógica real para determinar wpSessionId
+
+    // Verifica se a sessão do WhatsApp existe
+    const wpSession = await this.prisma.wpSession.findUnique({
+      where: { id: wpSessionId },
+    });
+
+    // Se a sessão não existir, cria uma nova
+    if (!wpSession) {
+      await this.prisma.wpSession.create({
+        data: {
+          id: wpSessionId,
+          sessionId: 'session-id', // Substitua pela lógica real para determinar sessionId
+          description: 'Descrição da sessão', // Substitua pela lógica real para determinar a descrição
+          dataPath: 'caminho/para/dados', // Substitua pela lógica real para determinar o caminho dos dados
+        },
+      });
+    }
+
+    // Cria a mensagem do WhatsApp
+    await this.prisma.wpMessage.create({
+      data: {
+        content: message.body,
+        osId: osId, // osId pode ser nulo
+        wpMessageType: 'RECEIVED', // ou 'SENT' com base no tipo de mensagem
+        wpHelpId: wpHelpId, // wpHelpId pode ser nulo
+        wpSessionId: wpSessionId, // ID da sessão
+      },
+    });
   }
 }
