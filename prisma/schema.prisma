@@ -232,7 +232,7 @@ model OSHelper {
   @@map("os_helper")
 }
 
-// Modelo de empresa cliente do sistema
+// Modelo para o cliente final (CorporateClient)
 model CorporateClient {
   id          Int                       @id @default(autoincrement())
   personId    Int
@@ -255,64 +255,65 @@ model CorporateClient {
   @@map("corporate_client")
 }
 
-// Tabelas destinadas ao bot de WhatsApp
+/// --------- TABELAS DESTINADAS AO BOT DE WHATSAPP ----------------
 
 // Modelo de Sessões do WhatsApp
 model WpSession {
-  id          String      @id @default(uuid())
-  sessionId   String      @unique
-  description String
-  dataPath    String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  wpHelp      WpHelp[]
-  wpMessages  WpMessage[]
+  number          String            @id // Número do WhatsApp (ID único da sessão)
+  name            String // Nome da sessão
+  status          String // Status da sessão (e.g., "PENDING", "CONNECTED", "DISCONNECTED")
+  qrCode          String? // QR code gerado para login (se aplicável)
+  sessionData     Json? // Dados persistentes da sessão (como tokens ou credenciais serializadas)
+  createdAt       DateTime          @default(now()) // Timestamp de criação
+  updatedAt       DateTime          @updatedAt // Atualizado automaticamente quando modificado
+  wpHelp          WpHelp[] // Atendimentos associados
+  WpMessage       WpMessage[]
+  WpInvitedMember WpInvitedMember[]
+  WpNumberSession WpNumberSession[]
 
   @@map("wp_session")
 }
 
 // Grava detalhes de cada chamado
-// Grava detalhes de cada chamado
 model WpHelp {
   id                Int               @id @default(autoincrement())
-  wpNumberId        Int // ID do número de WhatsApp
-  wpSessionId       String            @unique
-  startTime         DateTime          @default(now())
-  endTime           DateTime?
-  handledByMemberId Int? // ID do membro da equipe responsável pelo atendimento
+  wpNumberId        Int // ID do número de WhatsApp sendo atendido
+  wpSessionNumber   String // Número do WhatsApp associado
+  startTime         DateTime          @default(now()) // Hora de início
+  endTime           DateTime? // Hora de término
+  handledByMemberId Int? // ID do membro da equipe responsável
   teamMember        TeamMembers?      @relation(fields: [handledByMemberId], references: [id])
   wpNumber          WpNumber          @relation(fields: [wpNumberId], references: [id])
-  wpMessages        WpMessage[] // Relação um-para-muitos com WhatsAppMessage
-  invitedMembers    WpInvitedMember[] // Relação muitos-para-muitos com TeamMembers através de WpInvitedMember
-  isClosed          Boolean           @default(false) // Campo para saber se o atendimento foi encerrado
+  wpMessages        WpMessage[] // Mensagens trocadas entre o bot e o cliente
+  invitedMembers    WpInvitedMember[] // Membros convidados para o atendimento
+  isClosed          Boolean           @default(false) // Se o atendimento foi encerrado
   osId              Int? // ID da Ordem de Serviço associada
   os                OS?               @relation(fields: [osId], references: [id])
-  isBotHandling     Boolean           @default(false) // Campo para saber se o atendimento está sendo feito por um bot
-  isInQueue         Boolean           @default(false) // Campo para saber se o atendimento está na fila de espera
+  isBotHandling     Boolean           @default(false) // Se o bot está atendendo
+  isInQueue         Boolean           @default(false) // Se o atendimento está na fila de espera
   departmentId      Int? // ID do departamento na fila de espera
   department        Department?       @relation(fields: [departmentId], references: [id])
-  wpSession         WpSession         @relation(fields: [wpSessionId], references: [id])
+  wpSession         WpSession         @relation(fields: [wpSessionNumber], references: [number])
 
   @@map("wp_help")
 }
 
 // Armazena as mensagens trocadas entre o bot e o cliente
 model WpMessage {
-  id            Int           @id @default(autoincrement())
-  timestamp     DateTime      @default(now())
-  content       String        @db.Text
-  osId          Int?
-  wpMessageType WpMessageType // Tipo da mensagem (enviada ou recebida)
-  os            OS?           @relation(fields: [osId], references: [id], onDelete: Cascade)
-  wpHelpId      Int?
-  wpHelp        WpHelp?       @relation(fields: [wpHelpId], references: [id])
-  wpSessionId   String
-  wpSession     WpSession     @relation(fields: [wpSessionId], references: [id])
+  id              Int           @id @default(autoincrement())
+  timestamp       DateTime      @default(now()) // Timestamp da mensagem
+  content         String        @db.Text // Conteúdo da mensagem
+  osId            Int? // ID da Ordem de Serviço associada
+  wpMessageType   WpMessageType // Tipo da mensagem enviada ou recebida
+  os              OS?           @relation(fields: [osId], references: [id], onDelete: Cascade)
+  wpHelpId        Int? // ID do atendimento relacionado
+  wpHelp          WpHelp?       @relation(fields: [wpHelpId], references: [id])
+  wpSessionNumber String // Número do WhatsApp associado
+  wpSession       WpSession     @relation(fields: [wpSessionNumber], references: [number])
 
   @@map("whatsapp_message")
 }
 
-// Modelo de Mensagens do WhatsApp
 enum WpMessageType {
   SENT
   RECEIVED
@@ -320,37 +321,50 @@ enum WpMessageType {
 
 // Lista de membros convidados para atendimento
 model WpInvitedMember {
-  whatsappInstanceId Int
-  teamMemberId       Int
-  teamMember         TeamMembers @relation(fields: [teamMemberId], references: [id])
-  WpHelp             WpHelp?     @relation(fields: [wpHelpId], references: [id])
-  wpHelpId           Int?
+  whatsappInstanceNumber String
+  teamMemberId           Int
+  teamMember             TeamMembers @relation(fields: [teamMemberId], references: [id])
+  wpHelpId               Int?
+  wpHelp                 WpHelp?     @relation(fields: [wpHelpId], references: [id])
+  wpSession              WpSession   @relation(fields: [whatsappInstanceNumber], references: [number])
 
-  @@id([whatsappInstanceId, teamMemberId])
+  @@id([whatsappInstanceNumber, teamMemberId]) // Chave composta
   @@map("invited_member")
 }
 
-// Tabela intermediária para salvar clientes que chamarem no WhatsApp ou grava número de quem iniciamos um chamado
+// Tabela intermediária para salvar clientes que chamaram no WhatsApp ou grava número de quem iniciamos um chamado
 model WpNumber {
   id               Int                       @id @default(autoincrement())
-  number           String
-  personId         Int?
-  createdAt        DateTime                  @default(now())
-  updatedAt        DateTime                  @updatedAt
+  number           String // Número de telefone associado
+  personId         Int? // ID da pessoa associada
+  createdAt        DateTime                  @default(now()) // Timestamp de criação
+  updatedAt        DateTime                  @updatedAt // Timestamp de atualização
   person           Person?                   @relation(fields: [personId], references: [id])
+  WpHelp           WpHelp[] // Relacionamento com WpHelp
+  wpSessions       WpNumberSession[] // Relacionamento muitos-para-muitos via tabela intermediária
   corporateClients CorporateClientWpNumber[] // Relação muitos-para-muitos com CorporateClient
-  WpHelp           WpHelp[]
 
   @@map("wp_number")
 }
 
-// Tabela intermediária para a relação muitos-para-muitos entre CorporateClient e WpNumber
+// Tabela intermediária para a relação muitos-para-muitos entre WpNumber e WpSession
+model WpNumberSession {
+  wpNumberId      Int
+  wpSessionNumber String
+  wpNumber        WpNumber  @relation(fields: [wpNumberId], references: [id])
+  wpSession       WpSession @relation(fields: [wpSessionNumber], references: [number])
+
+  @@id([wpNumberId, wpSessionNumber]) // Chave composta
+  @@map("wp_number_session")
+}
+
+// Tabela intermediária para a relação muitos-para-muitos entre WpNumber e CorporateClient
 model CorporateClientWpNumber {
   corporateClientId Int
   wpNumberId        Int
   corporateClient   CorporateClient @relation(fields: [corporateClientId], references: [id])
   wpNumber          WpNumber        @relation(fields: [wpNumberId], references: [id])
 
-  @@id([corporateClientId, wpNumberId])
+  @@id([corporateClientId, wpNumberId]) // Chave composta para garantir a relação muitos-para-muitos
   @@map("corporate_client_wp_number")
 }

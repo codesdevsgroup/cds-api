@@ -3,11 +3,18 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class SendMessageDto {
   @ApiProperty({
-    description: 'Número de telefone para enviar a mensagem',
-    example: '5511999999999',
+    description: 'ID da sessão do WhatsApp',
+    example: '553391448945',
   })
   @IsString()
   number: string;
+
+  @ApiProperty({
+    description: 'Número de telefone para enviar a mensagem',
+    example: '553391448945',
+  })
+  @IsString()
+  phoneNumber: string;
 
   @ApiProperty({
     description: 'Conteúdo da mensagem a ser enviada',
@@ -15,11 +22,4 @@ export class SendMessageDto {
   })
   @IsString()
   message: string;
-
-  @ApiProperty({
-    description: 'ID da sessão do WhatsApp',
-    example: 'session123',
-  })
-  @IsString()
-  sessionId: string;
 }

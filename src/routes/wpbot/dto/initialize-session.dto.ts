@@ -3,16 +3,16 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class InitializeSessionDto {
   @ApiProperty({
-    description: 'ID da sessão a ser inicializada',
-    example: '1',
+    description: 'numero da sessão a ser inicializada',
+    example: '553391448945',
   })
   @IsString()
-  sessionId: string;
+  number: string;
 
   @ApiProperty({
     description: 'Descrição da sessão a ser inicializada',
-    example: 'Minha Sessão WhatsApp',
+    example: 'nome do whatsapp "minha empresa" "comercial"',
   })
   @IsString()
-  description: string;
+  name: string;
 }

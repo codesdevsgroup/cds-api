@@ -1,15 +1,6 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Res,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Res } from '@nestjs/common';
 import { Response } from 'express';
-import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IsPublic } from '../../shared/decorators/is-public.decorator';
 import { WpbotService } from './wpbot.service';
 import { ApiTags } from '@nestjs/swagger';
@@ -32,24 +23,22 @@ export class WpbotController {
     @Body() initializeSessionDto: InitializeSessionDto,
     @Res() response: Response,
   ) {
-    const { sessionId, description } = initializeSessionDto;
-    if (!description) {
+    const { number, name } = initializeSessionDto;
+    if (!name) {
       return response
         .status(400)
-        .send('Descrição é obrigatória para inicializar a sessão.');
+        .send('Name is required to initialize the session.');
     }
 
     try {
-      this.wpbotService.initializeSession({ sessionId, description });
+      this.wpbotService.initializeSession({ number, name });
       return response
         .status(200)
-        .send(
-          `Sessão "${sessionId}" inicializada. Escaneie o QR Code para conectar.`,
-        );
+        .send(`Session "${number}" initialized. Scan the QR Code to connect.`);
     } catch (error) {
       return response
         .status(500)
-        .send(`Erro ao inicializar a sessão "${sessionId}": ${error.message}`);
+        .send(`Error initializing session "${number}": ${error.message}`);
     }
   }
 
@@ -102,18 +91,18 @@ export class WpbotController {
 
   @Post('send-message')
   async sendMessage(
-    @Body() sendMessageDto: SendMessageDto, // Alterado para receber o body completo
+    @Body() sendMessageDto: SendMessageDto,
     @Res() response: Response,
   ) {
-    const { sessionId, number, message } = sendMessageDto; // Obtenha o sessionId do corpo da requisição
+    const { number, phoneNumber, message } = sendMessageDto;
     try {
-      await this.wpbotService.sendMessage(sessionId, number, message);
+      await this.wpbotService.sendMessage(number, phoneNumber, message);
       return response.status(200).send('Mensagem enviada com sucesso!');
     } catch (error) {
       return response
         .status(500)
         .send(
-          `Falha ao enviar mensagem na sessão "${sessionId}": ${error.message}`,
+          `Falha ao enviar mensagem na sessão "${number}": ${error.message}`,
         );
     }
   }
