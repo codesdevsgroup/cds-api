@@ -9,7 +9,7 @@ export class SocketIoAdapter extends IoAdapter {
 
   createIOServer(port: number, options?: ServerOptions) {
     const corsOptions = {
-      origin: ['https://liberty.codesdevs.com.br', 'http://localhost:4200'],
+      origin: ['http://localhost:4200'],
       methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'enctype'],
       credentials: true,
