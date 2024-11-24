@@ -86,6 +86,7 @@ model Department {
   deletedAt   DateTime?
   isDeleted   Boolean                @default(false)
   teamMembers TeamMemberDepartment[]
+  wpHelp      WpHelp[]
 
   @@map("departments")
 }
@@ -215,6 +216,7 @@ model OS {
   wpMessages   WpMessage[]
   teamMember   TeamMembers @relation(fields: [teamMemberId], references: [id])
   osHelpers    OSHelper[] // Relação muitos-para-muitos com TeamMembers através de OSHelper
+  wpHelp       WpHelp[]
 
   @@map("os")
 }
@@ -268,16 +270,24 @@ model WpSession {
 }
 
 // Grava detalhes de cada chamado
+// Grava detalhes de cada chamado
 model WpHelp {
   id                Int               @id @default(autoincrement())
   wpNumberId        Int // ID do número de WhatsApp
   startTime         DateTime          @default(now())
   endTime           DateTime?
-  handledByMemberId Int // ID do membro da equipe responsável pelo atendimento
-  teamMember        TeamMembers       @relation(fields: [handledByMemberId], references: [id])
+  handledByMemberId Int? // ID do membro da equipe responsável pelo atendimento
+  teamMember        TeamMembers?      @relation(fields: [handledByMemberId], references: [id])
   wpNumber          WpNumber          @relation(fields: [wpNumberId], references: [id])
   wpMessages        WpMessage[] // Relação um-para-muitos com WhatsAppMessage
   invitedMembers    WpInvitedMember[] // Relação muitos-para-muitos com TeamMembers através de WpInvitedMember
+  isClosed          Boolean           @default(false) // Campo para saber se o atendimento foi encerrado
+  osId              Int? // ID da Ordem de Serviço associada
+  os                OS?               @relation(fields: [osId], references: [id])
+  isBotHandling     Boolean           @default(false) // Campo para saber se o atendimento está sendo feito por um bot
+  isInQueue         Boolean           @default(false) // Campo para saber se o atendimento está na fila de espera
+  departmentId      Int? // ID do departamento na fila de espera
+  department        Department?       @relation(fields: [departmentId], references: [id])
 
   @@map("wp_help")
 }
