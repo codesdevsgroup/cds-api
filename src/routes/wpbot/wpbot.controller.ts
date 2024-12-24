@@ -7,6 +7,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { InitializeSessionDto } from './dto/initialize-session.dto';
 import { DeleteSessionDto } from './dto/delete-session.dto';
 import { SendMessageDto } from './dto/send-message.dto';
+import { SessionManagementService } from './sessionmanagement.service';
 
 @ApiTags('wpbot')
 @IsPublic()
@@ -15,6 +16,7 @@ export class WpbotController {
   constructor(
     private readonly eventEmitter: EventEmitter2,
     private readonly wpbotService: WpbotService, // Mantém a injeção do serviço WpbotService
+    private readonly sessionManagementService: SessionManagementService, // Inject SessionManagementService
   ) {}
 
   // Inicializa uma nova sessão do WhatsApp
@@ -80,7 +82,7 @@ export class WpbotController {
   ) {
     const { sessionId } = deleteSessionDto;
     try {
-      this.wpbotService.deleteSession(sessionId);
+      await this.sessionManagementService.deleteSession(sessionId); // Await the async method
       return response
         .status(200)
         .send(`Sessão "${sessionId}" deletada com sucesso.`);
