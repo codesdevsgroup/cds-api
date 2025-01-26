@@ -16,23 +16,20 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '../../shared/decorators/current-user.decorator';
-import { User } from '../../shared/entities/user.entity';
-import { Roles } from '../../shared/decorators/roles.decorator';
+import { CurrentUser } from '../../decorators/current-user.decorator';
+import { User } from '../../entities/user.entity';
+import { Roles } from '../../decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { AuthGuard } from '@nestjs/passport';
-import { ExcludeRoles } from '../../shared/decorators/exclude-roles.decorator';
-import { CustomInternalErrorException } from '../../shared/exeptions/custom-internal-error.exception';
-import { SearchParams } from '../../shared/types/common.types';
+import { ExcludeRoles } from '../../decorators/exclude-roles.decorator';
+import { SearchParams } from '../../types/common.types';
 import { Response } from 'express';
-import {
-  PersonOrderFields,
-  UserOrderFields,
-} from '../../shared/types/user.types';
+import { PersonOrderFields, UserOrderFields } from '../../types/user.types';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ParseSearchParamsPipe } from '../../shared/pipes/parse-search-params/parse-search-params.pipe';
+import { ParseSearchParamsPipe } from '../../pipes/parse-search-params/parse-search-params.pipe';
+import { CustomInternalErrorException } from '../../exceptions/custom-internal-error.exception';
 
 @ApiTags('User')
 @UseGuards(AuthGuard('jwt'))

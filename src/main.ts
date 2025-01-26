@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { LogInterceptor } from './shared/interceptors/log.interceptor';
+import { LogInterceptor } from './interceptors/log.interceptor';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { SocketIoAdapter } from './socket-io.adapter';
 import * as cors from 'cors';
@@ -12,7 +12,7 @@ async function bootstrap() {
 
   app.use(
     cors({
-      origin: ['https://liberty.codesdevs.com.br', 'http://localhost:4200'],
+      origin: ['https://codesdevs.com.br', 'http://localhost:4200'],
       methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'enctype'],
       credentials: true,

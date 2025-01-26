@@ -12,9 +12,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard } from '../../shared/guards/local-auth.guard';
+import { LocalAuthGuard } from '../../guards/local-auth.guard';
 import { AuthRequest } from './models/AuthRequest';
-import { IsPublic } from '../../shared/decorators/is-public.decorator';
+import { IsPublic } from '../../decorators/is-public.decorator';
 import { ApiTags } from '@nestjs/swagger';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginAuthDto } from './dto/login-auth.dto';
@@ -23,7 +23,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ActivateAccountDto } from './dto/activate-account.dto';
 import { ResendActivationEmailDto } from './dto/resend-activation-email.dto';
 import { AcceptTermsDto } from './dto/accept-terms.dto';
-import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 
 @ApiTags('Auth')
 @Controller()

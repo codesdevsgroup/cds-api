@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { IsPublic } from '../../shared/decorators/is-public.decorator';
+import { IsPublic } from '../../decorators/is-public.decorator';
 import { WpbotService } from './wpbot.service';
 import { ApiTags } from '@nestjs/swagger';
 import { InitializeSessionDto } from './dto/initialize-session.dto';

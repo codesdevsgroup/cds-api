@@ -4,17 +4,16 @@ import { PrismaService } from '../../services/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ConflictException } from '@nestjs/common';
-import { SearchParams } from '../../shared/types/common.types';
-import { paginationClause } from '../../shared/helpers/utils.helper';
+import { SearchParams } from '../../types/common.types';
+import { paginationClause } from '../../helpers/utils.helper';
 import {
   PersonOrderFields,
   SearchUser,
   UserOrderFields,
-} from '../../shared/types/user.types';
+} from '../../types/user.types';
 import { UpdateMeDto } from './dto/update-me.dto';
-import { Prisma, Role } from '@prisma/client';
+import { Prisma} from '@prisma/client';
 import { CreateAddressDto, CreatePersonDto } from './dto/create-person.dto';
-import { User } from "../../shared/entities/user.entity";
 
 @Injectable()
 export class UserService {

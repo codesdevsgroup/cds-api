@@ -1,4 +1,4 @@
-import { User } from '../../../shared/entities/user.entity';
+import { User } from '../../../entities/user.entity';
 
 export interface UserToken {
   access_token: string;

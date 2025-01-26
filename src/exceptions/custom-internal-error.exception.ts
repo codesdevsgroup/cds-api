@@ -2,6 +2,7 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 
 export class CustomInternalErrorException extends HttpException {
   constructor(error: any) {
+    console.log(JSON.stringify(error));
     console.error(error);
     super(
       {

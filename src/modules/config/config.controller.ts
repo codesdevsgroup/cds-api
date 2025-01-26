@@ -2,8 +2,8 @@ import { Controller, Get, Res, Body, Patch, HttpStatus } from '@nestjs/common';
 import { ConfigService } from './config.service';
 import { Response } from 'express';
 import { UpdateConfigDto } from './dto/update-config.dto';
-import { CustomInternalErrorException } from '../../shared/exeptions/custom-internal-error.exception';
-import { Roles } from '../../shared/decorators/roles.decorator';
+import { CustomInternalErrorException } from '../../exceptions/custom-internal-error.exception';
+import { Roles } from '../../decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
