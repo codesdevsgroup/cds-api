@@ -15,6 +15,7 @@ import { join } from 'path';
 import { WpbotModule } from './modules/wpbot/wpbot.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { ChatService } from './modules/chat/chat.service';
+import { PermissionsModule } from './modules/permissions/permissions.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ChatService } from './modules/chat/chat.service';
     }),
     WpbotModule,
     ChatModule,
+    PermissionsModule,
   ],
   providers: [
     EmailProcessor,

@@ -18,10 +18,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../decorators/current-user.decorator';
 import { User } from '../../entities/user.entity';
-import { Roles } from '../../decorators/roles.decorator';
-import { Role } from '@prisma/client';
 import { AuthGuard } from '@nestjs/passport';
-import { ExcludeRoles } from '../../decorators/exclude-roles.decorator';
 import { SearchParams } from '../../types/common.types';
 import { Response } from 'express';
 import { PersonOrderFields, UserOrderFields } from '../../types/user.types';
@@ -30,14 +27,16 @@ import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ParseSearchParamsPipe } from '../../pipes/parse-search-params/parse-search-params.pipe';
 import { CustomInternalErrorException } from '../../exceptions/custom-internal-error.exception';
+import { RequirePermission } from '../../decorators/require-permission.decorator';
+import { PermissionsGuard } from '../../guards/require-permission.guard';
 
 @ApiTags('User')
 @UseGuards(AuthGuard('jwt'))
+@UseGuards(PermissionsGuard)
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Roles(Role.ADMIN, Role.CODESDEVS, Role.SUPERVISOR)
   @Post('')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async createUser(@Body() createUserDto: CreateUserDto, @Res() res: Response) {
@@ -67,9 +66,8 @@ export class UserController {
     }
   }
 
-  @Roles(Role.ADMIN, Role.CODESDEVS)
-  @ExcludeRoles(Role.CLIENT)
   @Get('')
+  @RequirePermission('user', 'view')
   async listAllUsers(
     @Query(ParseSearchParamsPipe) params: SearchParams<UserOrderFields>,
     @Res() res: Response,
@@ -100,8 +98,6 @@ export class UserController {
     }
   }
 
-  @Roles(Role.ADMIN, Role.CODESDEVS)
-  @ExcludeRoles(Role.CLIENT)
   @Patch(':id')
   async updateUser(
     @Body() data: UpdateUserDto,
@@ -138,8 +134,6 @@ export class UserController {
     }
   }
 
-  @Roles(Role.CODESDEVS, Role.ADMIN)
-  @ExcludeRoles(Role.CLIENT)
   @Delete(':id')
   async deleteUser(@Param('id') id: string, @Res() res: Response) {
     try {
@@ -153,8 +147,6 @@ export class UserController {
     }
   }
 
-  @Roles(Role.ADMIN, Role.CODESDEVS)
-  @ExcludeRoles(Role.CLIENT)
   @Get('person')
   async listAllPersons(
     @Query(ParseSearchParamsPipe) params: SearchParams<PersonOrderFields>,
@@ -172,7 +164,6 @@ export class UserController {
     }
   }
 
-  @Roles(Role.ADMIN, Role.CODESDEVS, Role.SUPERVISOR)
   @Post('person')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async createPerson(

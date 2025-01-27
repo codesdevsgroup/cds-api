@@ -1,7 +1,4 @@
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('CLIENT', 'ADMIN', 'SUPERVISOR', 'STAFF', 'FINANCIAL', 'SOCIALMEDIA', 'CODESDEVS');
-
--- CreateEnum
 CREATE TYPE "WpSessionStatus" AS ENUM ('PENDING', 'CONNECTED', 'DISCONNECTED');
 
 -- CreateEnum
@@ -44,12 +41,26 @@ CREATE TABLE "user" (
     "activatedAt" TIMESTAMP(3),
     "termsIp" VARCHAR(45),
     "termsAccepted" BOOLEAN NOT NULL DEFAULT false,
-    "role" "Role" NOT NULL DEFAULT 'CLIENT',
+    "tokenVersion" INTEGER NOT NULL DEFAULT 0,
     "personId" INTEGER,
     "teamMembersId" INTEGER,
-    "tokenVersion" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "user_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "permission" (
+    "id" SERIAL NOT NULL,
+    "userId" TEXT NOT NULL,
+    "interface" VARCHAR(14) NOT NULL,
+    "canView" BOOLEAN NOT NULL DEFAULT false,
+    "canAdd" BOOLEAN NOT NULL DEFAULT false,
+    "canEdit" BOOLEAN NOT NULL DEFAULT false,
+    "canDelete" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "permission_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -116,10 +127,11 @@ CREATE TABLE "person" (
 -- CreateTable
 CREATE TABLE "address" (
     "id" SERIAL NOT NULL,
-    "street" VARCHAR(255) NOT NULL,
+    "street" VARCHAR(120) NOT NULL,
+    "complement" VARCHAR(30),
     "number" VARCHAR(10) NOT NULL,
-    "neighborhood" VARCHAR(255) NOT NULL,
-    "city" VARCHAR(255) NOT NULL,
+    "neighborhood" VARCHAR(100) NOT NULL,
+    "city" VARCHAR(100) NOT NULL,
     "state" VARCHAR(2) NOT NULL,
     "zipCode" VARCHAR(10) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -128,43 +140,6 @@ CREATE TABLE "address" (
     "isDeleted" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "address_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "scheduler" (
-    "id" SERIAL NOT NULL,
-    "personId" INTEGER NOT NULL,
-    "userId" TEXT NOT NULL,
-    "teamMemberId" INTEGER NOT NULL,
-    "processId" INTEGER NOT NULL,
-    "returnDay" TIMESTAMP(3),
-    "price" DOUBLE PRECISION NOT NULL,
-    "notation" VARCHAR(255),
-    "start" TIMESTAMP(3) NOT NULL,
-    "end" TIMESTAMP(3) NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-    "deletedAt" TIMESTAMP(3),
-    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
-    "responsePersonId" INTEGER,
-
-    CONSTRAINT "scheduler_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "processes" (
-    "id" SERIAL NOT NULL,
-    "name" VARCHAR(255) NOT NULL,
-    "description" VARCHAR(255),
-    "price" DOUBLE PRECISION NOT NULL DEFAULT 0,
-    "returInterval" INTEGER NOT NULL DEFAULT 0,
-    "duration" INTEGER NOT NULL DEFAULT 30,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-    "deletedAt" TIMESTAMP(3),
-    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
-
-    CONSTRAINT "processes_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -244,6 +219,7 @@ CREATE TABLE "wp_help" (
 -- CreateTable
 CREATE TABLE "whatsapp_message" (
     "id" SERIAL NOT NULL,
+    "messageId" TEXT NOT NULL,
     "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "content" TEXT NOT NULL,
     "osId" INTEGER,
@@ -254,6 +230,7 @@ CREATE TABLE "whatsapp_message" (
     "status" "WpMessageStatus" NOT NULL,
     "direction" "WpMessageDirection" NOT NULL,
     "isAutomated" BOOLEAN NOT NULL DEFAULT false,
+    "wpNumberId" INTEGER,
 
     CONSTRAINT "whatsapp_message_pkey" PRIMARY KEY ("id")
 );
@@ -274,18 +251,9 @@ CREATE TABLE "wp_number" (
     "personId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "wpSessions" TEXT,
 
     CONSTRAINT "wp_number_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "wp_number_session" (
-    "wpNumberId" INTEGER NOT NULL,
-    "wpSessionNumber" TEXT NOT NULL,
-    "createdBy" INTEGER,
-    "updatedBy" INTEGER,
-
-    CONSTRAINT "wp_number_session_pkey" PRIMARY KEY ("wpNumberId","wpSessionNumber")
 );
 
 -- CreateTable
@@ -309,6 +277,9 @@ CREATE UNIQUE INDEX "user_personId_key" ON "user"("personId");
 CREATE UNIQUE INDEX "user_teamMembersId_key" ON "user"("teamMembersId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "permission_userId_interface_key" ON "permission"("userId", "interface");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "person_email_key" ON "person"("email");
 
 -- CreateIndex
@@ -320,11 +291,20 @@ CREATE UNIQUE INDEX "corporate_client_email_key" ON "corporate_client"("email");
 -- CreateIndex
 CREATE UNIQUE INDEX "corporate_client_addressId_key" ON "corporate_client"("addressId");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "whatsapp_message_messageId_key" ON "whatsapp_message"("messageId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "wp_number_number_key" ON "wp_number"("number");
+
 -- AddForeignKey
 ALTER TABLE "user" ADD CONSTRAINT "user_personId_fkey" FOREIGN KEY ("personId") REFERENCES "person"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "user" ADD CONSTRAINT "user_teamMembersId_fkey" FOREIGN KEY ("teamMembersId") REFERENCES "team_members"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "permission" ADD CONSTRAINT "permission_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "team_member_department" ADD CONSTRAINT "team_member_department_teamMemberId_fkey" FOREIGN KEY ("teamMemberId") REFERENCES "team_members"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -334,18 +314,6 @@ ALTER TABLE "team_member_department" ADD CONSTRAINT "team_member_department_depa
 
 -- AddForeignKey
 ALTER TABLE "person" ADD CONSTRAINT "person_addressId_fkey" FOREIGN KEY ("addressId") REFERENCES "address"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "scheduler" ADD CONSTRAINT "scheduler_personId_fkey" FOREIGN KEY ("personId") REFERENCES "person"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "scheduler" ADD CONSTRAINT "scheduler_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "scheduler" ADD CONSTRAINT "scheduler_responsePersonId_fkey" FOREIGN KEY ("responsePersonId") REFERENCES "person"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "scheduler" ADD CONSTRAINT "scheduler_processId_fkey" FOREIGN KEY ("processId") REFERENCES "processes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "os" ADD CONSTRAINT "os_personId_fkey" FOREIGN KEY ("personId") REFERENCES "person"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -390,6 +358,9 @@ ALTER TABLE "whatsapp_message" ADD CONSTRAINT "whatsapp_message_wpHelpId_fkey" F
 ALTER TABLE "whatsapp_message" ADD CONSTRAINT "whatsapp_message_wpSessionNumber_fkey" FOREIGN KEY ("wpSessionNumber") REFERENCES "wp_session"("number") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "whatsapp_message" ADD CONSTRAINT "whatsapp_message_wpNumberId_fkey" FOREIGN KEY ("wpNumberId") REFERENCES "wp_number"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "invited_member" ADD CONSTRAINT "invited_member_teamMemberId_fkey" FOREIGN KEY ("teamMemberId") REFERENCES "team_members"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -400,12 +371,6 @@ ALTER TABLE "invited_member" ADD CONSTRAINT "invited_member_whatsappInstanceNumb
 
 -- AddForeignKey
 ALTER TABLE "wp_number" ADD CONSTRAINT "wp_number_personId_fkey" FOREIGN KEY ("personId") REFERENCES "person"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "wp_number_session" ADD CONSTRAINT "wp_number_session_wpNumberId_fkey" FOREIGN KEY ("wpNumberId") REFERENCES "wp_number"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "wp_number_session" ADD CONSTRAINT "wp_number_session_wpSessionNumber_fkey" FOREIGN KEY ("wpSessionNumber") REFERENCES "wp_session"("number") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "corporate_client_wp_number" ADD CONSTRAINT "corporate_client_wp_number_corporateClientId_fkey" FOREIGN KEY ("corporateClientId") REFERENCES "corporate_client"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

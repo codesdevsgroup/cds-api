@@ -12,7 +12,7 @@ import {
   UserOrderFields,
 } from '../../types/user.types';
 import { UpdateMeDto } from './dto/update-me.dto';
-import { Prisma} from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { CreateAddressDto, CreatePersonDto } from './dto/create-person.dto';
 
 @Injectable()
@@ -92,7 +92,6 @@ export class UserService {
           createdAt: true,
           email: true,
           isActive: true,
-          role: true,
           termsIp: true,
           isDeleted: true,
           termsAccepted: true,
