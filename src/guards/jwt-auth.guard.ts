@@ -40,11 +40,4 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       throw new UnauthorizedException();
     });
   }
-
-  handleRequest(err, user, info) {
-    if (err || !user) {
-      throw err || new UnauthorizedException('User not found');
-    }
-    return user;
-  }
 }
