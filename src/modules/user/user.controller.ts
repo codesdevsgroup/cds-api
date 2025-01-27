@@ -32,7 +32,7 @@ import { PermissionsGuard } from '../../guards/require-permission.guard';
 
 @ApiTags('User')
 @UseGuards(AuthGuard('jwt'))
-@UseGuards(PermissionsGuard) // Aplica o guard a todas as rotas do controlador
+@UseGuards(PermissionsGuard)
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -67,7 +67,7 @@ export class UserController {
   }
 
   @Get('')
-  @RequirePermission('user', 'canAdd')
+  @RequirePermission('user', 'view')
   async listAllUsers(
     @Query(ParseSearchParamsPipe) params: SearchParams<UserOrderFields>,
     @Res() res: Response,

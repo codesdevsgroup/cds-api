@@ -57,11 +57,11 @@ model User {
 model Permission {
   id        Int      @id @default(autoincrement())
   userId    String // ID do usuário relacionado
-  interface String   @db.VarChar(14) // Nome do módulo/interface (ex.: "produtos", "clientes", etc.)
-  canView   Boolean  @default(false) // Se pode visualizar
-  canAdd    Boolean  @default(false) // Se pode adicionar
-  canEdit   Boolean  @default(false) // Se pode editar
-  canDelete Boolean  @default(false) // Se pode excluir
+  interface String   @db.VarChar(15) // Nome do módulo/interface (ex.: "produtos", "clientes", etc.)
+  view      Boolean  @default(false) // Se pode visualizar
+  add       Boolean  @default(false) // Se pode adicionar
+  edit      Boolean  @default(false) // Se pode editar
+  delete    Boolean  @default(false) // Se pode excluir
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

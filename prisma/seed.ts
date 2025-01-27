@@ -17,11 +17,17 @@ async function main() {
       permissions: {
         create: [
           {
-            interface: 'wpbot',
-            canView: true,
-            canAdd: true,
-            canEdit: true,
-            canDelete: true,
+            interface: 'user',
+            view: true,
+            add: true,
+            edit: true,
+            delete: true,
+          },
+          {
+            interface: 'permission',
+            view: true,
+            add: true,
+            edit: true,
           },
         ],
       },
