@@ -47,7 +47,6 @@ model User {
   tokenVersion  Int          @default(0)
   person        Person?      @relation(fields: [personId], references: [id])
   teamMembers   TeamMembers? @relation(fields: [teamMembersId], references: [id])
-  scheduler     Scheduler[]
 
   @@map("user")
 }
@@ -104,46 +103,45 @@ model TeamMemberDepartment {
 
 // Modelo de Pessoas (Clientes e Funcionários) da Empresa com Dados Pessoais e de Contato
 model Person {
-  id                 Int               @id @default(autoincrement())
-  name               String            @db.VarChar(255)
-  fantasyName        String?           @db.VarChar(255)
-  cpfCnpj            String?           @db.VarChar(11)
-  email              String            @unique @db.VarChar(80)
-  phone1             String?           @db.VarChar(20)
-  phone2             String?           @db.VarChar(20)
-  birthDate          DateTime?
-  notes              String?
-  defaulter          Boolean           @default(false)
-  photo              String?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  deletedAt          DateTime?
-  isDeleted          Boolean           @default(false)
-  user               User?             @relation
-  addressId          Int?              @unique
-  address            Address?          @relation(fields: [addressId], references: [id])
-  schedulers         Scheduler[]       @relation("SchedulerPerson")
-  responseSchedulers Scheduler[]       @relation("SchedulerResponsePerson")
-  os                 OS[]
-  corporateClient    CorporateClient[]
-  wpNumbers          WpNumber[]
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(255)
+  fantasyName     String?           @db.VarChar(255)
+  cpfCnpj         String?           @db.VarChar(11)
+  email           String            @unique @db.VarChar(80)
+  phone1          String?           @db.VarChar(20)
+  phone2          String?           @db.VarChar(20)
+  birthDate       DateTime?
+  notes           String?
+  defaulter       Boolean           @default(false)
+  photo           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  deletedAt       DateTime?
+  isDeleted       Boolean           @default(false)
+  user            User?             @relation
+  addressId       Int?              @unique
+  address         Address?          @relation(fields: [addressId], references: [id])
+  os              OS[]
+  corporateClient CorporateClient[]
+  wpNumbers       WpNumber[]
 
   @@map("person")
 }
 
-// Modelo de Endereços para Pessoas (Clientes e Funcionários)
+// Modelo de Endereços
 model Address {
   id           Int              @id @default(autoincrement())
-  street       String           @db.VarChar(255)
-  number       String           @db.VarChar(10)
-  neighborhood String           @db.VarChar(255)
-  city         String           @db.VarChar(255)
-  state        String           @db.VarChar(2)
-  zipCode      String           @db.VarChar(10)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  deletedAt    DateTime?
-  isDeleted    Boolean          @default(false)
+  street       String           @db.VarChar(120) // Rua, avenida, etc.
+  complement   String?          @db.VarChar(30) // Complemento (bloco, apto, etc.)
+  number       String           @db.VarChar(10) // Número do imóvel
+  neighborhood String           @db.VarChar(100) // Bairro
+  city         String           @db.VarChar(100) // Cidade
+  state        String           @db.VarChar(2) // Estado
+  zipCode      String           @db.VarChar(10) // CEP
+  createdAt    DateTime         @default(now()) // Data de criação
+  updatedAt    DateTime         @updatedAt // Data de atualização
+  deletedAt    DateTime? // Data de exclusão
+  isDeleted    Boolean          @default(false) // Indica se o registro foi excluído
   person       Person?
   corporate    CorporateClient?
 
@@ -158,48 +156,6 @@ enum Role {
   FINANCIAL
   SOCIALMEDIA
   CODESDEVS
-}
-
-// Modelo Agendamento
-model Scheduler {
-  id               Int       @id @default(autoincrement())
-  personId         Int
-  userId           String // Usuário que fez o Agendamento
-  teamMemberId     Int // Membro da equipe que fará o atendimento
-  processId        Int
-  returnDay        DateTime?
-  price            Float
-  notation         String?   @db.VarChar(255)
-  start            DateTime
-  end              DateTime
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  deletedAt        DateTime?
-  isDeleted        Boolean   @default(false)
-  person           Person    @relation("SchedulerPerson", fields: [personId], references: [id])
-  user             User      @relation(fields: [userId], references: [id])
-  responsePersonId Int?
-  personResponse   Person?   @relation("SchedulerResponsePerson", fields: [responsePersonId], references: [id])
-  process          Processes @relation(fields: [processId], references: [id])
-
-  @@map("scheduler")
-}
-
-// Modelo de Procedimento
-model Processes {
-  id            Int         @id @default(autoincrement())
-  name          String      @db.VarChar(255)
-  description   String?     @db.VarChar(255)
-  price         Float       @default(0)
-  returInterval Int         @default(0)
-  duration      Int         @default(30)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  deletedAt     DateTime?
-  isDeleted     Boolean     @default(false)
-  scheduler     Scheduler[]
-
-  @@map("processes")
 }
 
 // Modelo de Ordem de Serviço (OS)
