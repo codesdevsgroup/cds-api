@@ -58,4 +58,3 @@ env
 /.wwebjs_auth/
 /.wwebjs_cache/
 /auth/
-/src/api-client/
