@@ -1,0 +1,13 @@
+export * from './auth.service';
+import { AuthService } from './auth.service';
+export * from './config.service';
+import { ConfigService } from './config.service';
+export * from './default.service';
+import { DefaultService } from './default.service';
+export * from './permissions.service';
+import { PermissionsService } from './permissions.service';
+export * from './user.service';
+import { UserService } from './user.service';
+export * from './wpbot.service';
+import { WpbotService } from './wpbot.service';
+export const APIS = [AuthService, ConfigService, DefaultService, PermissionsService, UserService, WpbotService];

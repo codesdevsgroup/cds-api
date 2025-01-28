@@ -6,6 +6,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { SocketIoAdapter } from './socket-io.adapter';
 import * as cors from 'cors';
 import './logger';
+import * as fs from 'node:fs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -31,17 +32,14 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Documentação com Swagger - CodesDevs')
-    .setDescription(
-      'O Swagger (aka OpenApi) é uma biblioteca muito conhecida no universo backend.',
-    )
+    .setDescription('Documentação da API do CodesDevs')
     .setVersion('1.0')
-    .addTag('user')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
+  fs.writeFileSync('./swagger.json', JSON.stringify(document));
 
-  // Configurar o adaptador do Socket.IO
   app.useWebSocketAdapter(new SocketIoAdapter(app));
 
   await app.listen(3006);
