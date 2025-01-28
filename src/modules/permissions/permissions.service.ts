@@ -51,4 +51,20 @@ export class PermissionsService {
     await Promise.all(updatePromises);
     return this.getPermissions(userId);
   }
+
+  async getMyPermissions(userId: string) {
+    const permissions = await prisma.permission.findMany({
+      where: {
+        userId: userId,
+      },
+    });
+
+    return permissions.map((permission) => ({
+      interface: permission.interface,
+      view: permission.view,
+      add: permission.add,
+      edit: permission.edit,
+      delete: permission.delete,
+    }));
+  }
 }

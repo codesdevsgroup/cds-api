@@ -1,0 +1,15 @@
+meta {
+  name: permission me
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{host}}/permissions/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt}}
+}
