@@ -42,14 +42,13 @@ model User {
   termsIp       String?   @db.VarChar(45)
   termsAccepted Boolean   @default(false)
   tokenVersion  Int       @default(0)
-
-  personId      Int? @unique
-  teamMembersId Int? @unique
+  personId      Int?      @unique
+  teamMembersId Int?      @unique
 
   person      Person?      @relation(fields: [personId], references: [id])
   teamMembers TeamMembers? @relation(fields: [teamMembersId], references: [id])
 
-  permissions Permission[] // Relacionamento com permissões
+  permissions Permission[]
 
   @@map("user")
 }

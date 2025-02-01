@@ -25,12 +25,12 @@ import { ResendActivationEmailDto } from './dto/resend-activation-email.dto';
 import { AcceptTermsDto } from './dto/accept-terms.dto';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 
+@IsPublic()
 @ApiTags('Auth')
 @Controller()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @IsPublic()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
@@ -38,28 +38,24 @@ export class AuthController {
     return this.authService.login(loginAuthDto);
   }
 
-  @IsPublic()
   @Post('register')
   @HttpCode(HttpStatus.OK)
   register(@Req() req: AuthRequest, @Body() registerUserDto: RegisterUserDto) {
     return this.authService.register(registerUserDto, req);
   }
 
-  @IsPublic()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
 
-  @IsPublic()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto);
   }
 
-  @IsPublic()
   @Get('activate')
   async activateAccount(
     @Query('token') token: string,
@@ -74,7 +70,6 @@ export class AuthController {
     return { message: 'Account activated successfully' };
   }
 
-  @IsPublic()
   @Post('resend-activation')
   @HttpCode(HttpStatus.OK)
   async resendActivation(

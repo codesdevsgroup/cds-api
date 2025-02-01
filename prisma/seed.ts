@@ -10,7 +10,7 @@ async function main() {
     create: {
       email: 'teste@teste.com',
       username: 'teste',
-      password: '$2b$10$H62/bxhk4DJtNkNXzsCNJuDPlFKHiHtHPTkl6eW78IreD/sYCPiQK',
+      password: '$2b$10$H62/bxhk4DJtNkNXzsCNJuDPlFKHiHtHPTkl6eW78IreD/sYCPiQK', // 123456
       isActive: true,
       createdAt: new Date(),
       termsAccepted: true,
